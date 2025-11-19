@@ -12,6 +12,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     checkUser()
@@ -29,6 +30,8 @@ export function Navbar() {
     } catch (error) {
       // User not logged in
       setUser(null)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -53,9 +56,10 @@ export function Navbar() {
               <Image 
                 src="/logo.jpg" 
                 alt="Logo" 
-                width={100} 
-                height={80}
-                className="w-10 h-10 object-contain"
+                width={120} 
+                height={60}
+                className="h-12 md:h-14 w-auto object-contain"
+                priority
               />
             </Link>
 
@@ -74,7 +78,9 @@ export function Navbar() {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
-              {user ? (
+              {loading ? (
+                <div className="w-24 h-9 bg-muted animate-pulse rounded-lg" />
+              ) : user ? (
                 <>
                   <Button size="sm" asChild>
                     <Link href="/upload">Upload</Link>
@@ -144,7 +150,9 @@ export function Navbar() {
               <Link href="/team" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
                 Teams
               </Link>
-              {user ? (
+              {loading ? (
+                <div className="w-full h-20 bg-muted animate-pulse rounded-lg mt-4" />
+              ) : user ? (
                 <>
                   <Link href="/profile" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
                     Profile
