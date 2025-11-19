@@ -51,7 +51,7 @@ export function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 font-semibold text-lg hover:opacity-80 transition-opacity">
               <Image 
-                src="/logo.png" 
+                src="/logo.jpg" 
                 alt="Logo" 
                 width={40} 
                 height={40}
