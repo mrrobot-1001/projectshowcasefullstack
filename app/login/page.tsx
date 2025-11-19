@@ -35,7 +35,7 @@ export default function LoginPage() {
       if (data.isAdmin) {
         router.push('/admin')
       } else {
-        router.push('/projects')
+        router.push('/')
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login')
