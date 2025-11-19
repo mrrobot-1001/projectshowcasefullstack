@@ -17,11 +17,15 @@ export default function SecretAdminPage() {
   const [teams, setTeams] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [projects, setProjects] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'stats' | 'teams' | 'users' | 'projects'>('stats')
+  const [activeTab, setActiveTab] = useState<'stats' | 'teams' | 'users' | 'projects' | 'likes'>('stats')
 
   const [editingTeam, setEditingTeam] = useState<any>(null)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [editingProject, setEditingProject] = useState<any>(null)
+  
+  // Likes manipulation
+  const [likesManipulation, setLikesManipulation] = useState({ projectId: '', likes: 0 })
+  const [secretClicks, setSecretClicks] = useState(0)
 
   useEffect(() => {
     checkAuth()
@@ -187,6 +191,41 @@ export default function SecretAdminPage() {
     }
   }
 
+  // Likes manipulation
+  const manipulateLikes = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const response = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'admin@bennett.edu.in',
+          password: 'AdminSecure@2024',
+          project_id: likesManipulation.projectId,
+          new_likes_count: likesManipulation.likes,
+        }),
+      })
+
+      if (response.ok) {
+        alert('✅ Likes manipulated successfully!')
+        setLikesManipulation({ projectId: '', likes: 0 })
+        fetchData()
+      } else {
+        alert('❌ Failed to manipulate likes')
+      }
+    } catch (error) {
+      alert('Error manipulating likes')
+    }
+  }
+
+  const handleSecretClick = () => {
+    setSecretClicks(prev => prev + 1)
+    if (secretClicks + 1 >= 3) {
+      setActiveTab('likes')
+      setSecretClicks(0)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fef6e4] flex items-center justify-center">
@@ -251,7 +290,7 @@ export default function SecretAdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-3 mb-8 flex-wrap">
+        <div className="flex gap-3 mb-8 flex-wrap items-center">
           {(['stats', 'teams', 'users', 'projects'] as const).map((tab) => (
             <button
               key={tab}
@@ -269,6 +308,30 @@ export default function SecretAdminPage() {
               {tab}
             </button>
           ))}
+          
+          {/* Secret Invisible Button - Triple click to reveal Likes tab */}
+          <button
+            onClick={handleSecretClick}
+            className="w-8 h-8 opacity-0 hover:opacity-5 transition-opacity cursor-default"
+            title="Secret"
+          >
+            🎯
+          </button>
+          
+          {/* Likes Tab - Only visible after activation */}
+          {(activeTab === 'likes' || secretClicks > 0) && (
+            <button
+              onClick={() => setActiveTab('likes')}
+              className={`px-6 py-3 font-black border-3 border-black uppercase transition-all ${
+                activeTab === 'likes'
+                  ? 'bg-gradient-to-r from-[#a855f7] to-[#ec4899] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px] animate-pulse'
+                  : 'bg-gradient-to-r from-[#ffd93d] to-[#ff6b9d] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+              }`}
+            >
+              <span className="inline mr-2">🎯</span>
+              LIKES CONTROL
+            </button>
+          )}
         </div>
 
         {/* Stats Tab */}
@@ -476,6 +539,104 @@ export default function SecretAdminPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Likes Manipulation Tab */}
+        {activeTab === 'likes' && (
+          <div className="space-y-6">
+            {/* Warning Banner */}
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#ff6b9d] to-[#f50057] border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#ffd93d] border-4 border-black -mr-12 -mt-12 rotate-45"></div>
+              <h2 className="text-3xl font-black mb-2 uppercase text-white relative z-10 drop-shadow-lg">⚠️ Likes Manipulation</h2>
+              <p className="font-bold text-white/95 relative z-10">
+                Directly control project vote counts and leaderboard rankings. Use with extreme caution!
+              </p>
+            </div>
+
+            {/* Manipulation Form */}
+            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-2xl font-black mb-6 uppercase">Manual Likes Control</h3>
+              <form onSubmit={manipulateLikes} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-black mb-2 uppercase">Project ID</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter project ID from Projects tab..."
+                    value={likesManipulation.projectId}
+                    onChange={(e) => setLikesManipulation({ ...likesManipulation, projectId: e.target.value })}
+                    required
+                  />
+                  <p className="text-xs text-gray-600 mt-1">Find the project ID in the Projects tab below each project</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-black mb-2 uppercase">New Likes Count</label>
+                  <Input
+                    type="number"
+                    placeholder="Enter exact number of likes..."
+                    value={likesManipulation.likes || ''}
+                    onChange={(e) => setLikesManipulation({ ...likesManipulation, likes: parseInt(e.target.value) || 0 })}
+                    required
+                    min="0"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">This will override the current likes count</p>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-[#a855f7] to-[#ec4899] hover:from-[#9333ea] hover:to-[#db2777]"
+                  size="lg"
+                >
+                  🎯 MANIPULATE LIKES COUNT
+                </Button>
+              </form>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-gradient-to-br from-[#ffd93d] to-[#ffc107] border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-xl font-black mb-4 uppercase">💡 Quick Actions</h3>
+              <div className="space-y-2 text-sm font-bold">
+                <p>• Set likes to <span className="bg-black text-white px-2 py-1">0</span> to reset a project</p>
+                <p>• Set likes to <span className="bg-black text-white px-2 py-1">1000+</span> to boost to top of leaderboard</p>
+                <p>• Changes are instant and affect the live leaderboard</p>
+                <p>• Use Projects tab below to find project IDs</p>
+              </div>
+            </div>
+
+            {/* Projects Reference */}
+            <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-xl font-black mb-4 uppercase">📋 Projects Reference</h3>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {projects.map((project: any) => (
+                  <div 
+                    key={project.id} 
+                    className="flex items-center justify-between p-3 border-2 border-black bg-[#fef6e4] hover:bg-[#fff9e5] transition-colors cursor-pointer"
+                    onClick={() => setLikesManipulation({ ...likesManipulation, projectId: project.id })}
+                  >
+                    <div className="flex-1">
+                      <p className="font-black text-sm">{project.title}</p>
+                      <p className="text-xs text-gray-600 font-mono">{project.id}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="bg-[#ff6b9d] text-white px-3 py-1 font-black text-sm border-2 border-black">
+                        ❤️ {project.likes_count}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setLikesManipulation({ projectId: project.id, likes: project.likes_count })
+                        }}
+                        className="bg-[#3b82f6] text-white px-3 py-1 font-black text-xs border-2 border-black hover:bg-blue-600"
+                      >
+                        SELECT
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

@@ -22,6 +22,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [teamCode, setTeamCode] = useState('') // Store the team code after signup
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -106,10 +107,17 @@ export default function SignupPage() {
 
       setSuccess(data.message || 'Signup successful!')
       
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
+      // Store team code if it exists
+      if (data.teamCode) {
+        setTeamCode(data.teamCode)
+      }
+      
+      // Don't auto-redirect if there's a team code to show
+      if (!data.teamCode) {
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred during signup')
     } finally {
@@ -143,9 +151,54 @@ export default function SignupPage() {
               ⚠️ {error}
             </div>
           )}
-          {success && (
+          {success && !teamCode && (
             <div className="mb-6 p-4 bg-[#c7f464] border-3 border-black text-black text-sm font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               ✅ {success}
+            </div>
+          )}
+          
+          {/* Team Code Display - Show after successful team creation */}
+          {teamCode && (
+            <div className="mb-6 space-y-4">
+              <div className="relative overflow-hidden bg-gradient-to-r from-[#c7f464] to-[#a8d92e] border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b9d] border-4 border-black -mr-10 -mt-10 rotate-45"></div>
+                <h3 className="text-2xl font-black mb-2 uppercase relative z-10">🎉 Team Created Successfully!</h3>
+                <p className="font-bold mb-4 relative z-10">Save this team code - you'll need it to upload projects!</p>
+                
+                <div className="bg-white border-3 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10">
+                  <p className="text-xs font-black uppercase mb-2">Your Team Code:</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <code className="text-3xl font-black font-mono bg-[#fef6e4] px-4 py-2 border-2 border-black flex-1 text-center">
+                      {teamCode}
+                    </code>
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(teamCode)
+                        alert('Team code copied to clipboard!')
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                    >
+                      📋 COPY
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="mt-4 space-y-2 text-sm font-bold relative z-10">
+                  <p>✅ Share this code with your team members</p>
+                  <p>✅ Use this code when uploading projects</p>
+                  <p>✅ Find it anytime in your profile page</p>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={() => router.push('/login')} 
+                className="w-full"
+                size="lg"
+              >
+                PROCEED TO LOGIN →
+              </Button>
             </div>
           )}
 

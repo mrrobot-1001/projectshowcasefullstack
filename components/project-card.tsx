@@ -2,16 +2,20 @@
 
 import Image from 'next/image'
 import { Heart } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface ProjectCardProps {
   id: string
   title: string
   description: string
-  thumbnail: string
-  track: string
-  likes: number
+  thumbnail?: string
+  image_url?: string
+  track?: string
+  category?: string
+  likes?: number
+  likes_count?: number
   onLike?: () => void
+  onLikeUpdate?: () => void
 }
 
 const cardBackgrounds = [
@@ -39,17 +43,69 @@ export function ProjectCard({
   title,
   description,
   thumbnail,
+  image_url,
   track,
+  category,
   likes,
+  likes_count,
   onLike,
+  onLikeUpdate,
 }: ProjectCardProps) {
   const [isLiked, setIsLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(likes)
+  const [likeCount, setLikeCount] = useState(likes_count || likes || 0)
+  const [loading, setLoading] = useState(false)
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1)
-    onLike?.()
+  const imageUrl = image_url || thumbnail || '/placeholder.svg'
+  const projectTrack = category || track || 'General'
+
+  // Check if user has already liked this project
+  useEffect(() => {
+    checkLikeStatus()
+  }, [id])
+
+  const checkLikeStatus = async () => {
+    try {
+      const response = await fetch(`/api/likes?project_id=${id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setIsLiked(data.liked)
+      }
+    } catch (error) {
+      console.error('Error checking like status:', error)
+    }
+  }
+
+  const handleLike = async () => {
+    if (loading) return
+    
+    setLoading(true)
+    try {
+      const response = await fetch('/api/likes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ project_id: id }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setIsLiked(data.liked)
+        setLikeCount(prev => data.liked ? (prev || 0) + 1 : Math.max((prev || 0) - 1, 0))
+        
+        // Call the callbacks
+        onLike?.()
+        onLikeUpdate?.()
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to update vote')
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error)
+      alert('Failed to update vote. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Use id to deterministically select colors
@@ -62,7 +118,7 @@ export function ProjectCard({
       {/* Thumbnail */}
       <div className="relative w-full h-48 md:h-56 bg-gray-100 overflow-hidden border-b-4 border-black">
         <Image
-          src={thumbnail || "/placeholder.svg"}
+          src={imageUrl}
           alt={title}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-300"
@@ -74,7 +130,7 @@ export function ProjectCard({
         {/* Track Badge */}
         <div className="mb-3">
           <span className={`inline-block px-3 py-1.5 text-xs font-black ${trackColor} text-white border-2 border-black uppercase tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}>
-            {track}
+            {projectTrack}
           </span>
         </div>
 
@@ -91,22 +147,23 @@ export function ProjectCard({
         {/* Like Button */}
         <button
           onClick={handleLike}
+          disabled={loading}
           className={`flex items-center gap-2 px-4 py-2 border-3 border-black font-bold text-sm transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
             isLiked
-              ? 'bg-[#ff6b9d] text-black'
+              ? 'bg-[#ff6b9d] text-white'
               : 'bg-white text-black'
-          }`}
+          } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Heart
             size={18}
             strokeWidth={3}
             className={`transition-all ${
               isLiked
-                ? 'fill-black'
+                ? 'fill-white'
                 : ''
             }`}
           />
-          <span>{likeCount} VOTES</span>
+          <span>{isLiked ? '❤️ VOTED' : `🤍 VOTE`} ({likeCount})</span>
         </button>
       </div>
     </div>

@@ -17,11 +17,24 @@ export async function GET() {
       .eq('id', user.id)
       .single()
 
+    // Get team code if user has a team
+    let teamCode = null
+    if (profile?.team_id) {
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('unique_team_code')
+        .eq('id', profile.team_id)
+        .single()
+      
+      teamCode = teamData?.unique_team_code
+    }
+
     return NextResponse.json({ 
       id: user.id,
       email: user.email,
       name: profile?.name || user.user_metadata?.name,
       phone_number: profile?.phone_number,
+      team_code: teamCode,
       ...profile 
     })
   } catch (error) {
