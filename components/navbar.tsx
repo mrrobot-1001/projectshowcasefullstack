@@ -47,12 +47,12 @@ export function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/20">
-      <div className="px-4 py-3 md:py-4">
-        <div className="container mx-auto max-w-6xl">
+    <nav className="sticky top-0 z-50 bg-white border-b-4 border-black">
+      <div className="px-4 py-4">
+        <div className="container mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 font-semibold text-lg hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center gap-2 font-black text-lg hover:translate-x-[2px] hover:translate-y-[2px] transition-transform">
               <Image 
                 src="/logo.jpg" 
                 alt="Logo" 
@@ -64,53 +64,56 @@ export function Navbar() {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
-              <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
-                Home
+            <div className="hidden md:flex items-center gap-3">
+              <Link href="/" className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                HOME
               </Link>
-              <Link href="/leaderboard" className="text-sm font-medium hover:text-primary transition-colors">
-                Leaderboard
+              <Link href="/leaderboard" className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                LEADERBOARD
               </Link>
-              <Link href="/team" className="text-sm font-medium hover:text-primary transition-colors">
-                Teams
+              <Link href="/team" className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                TEAMS
               </Link>
             </div>
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
               {loading ? (
-                <div className="w-24 h-9 bg-muted animate-pulse rounded-lg" />
+                <div className="w-24 h-9 bg-gray-200 border-3 border-black animate-pulse" />
               ) : user ? (
                 <>
-                  <Button size="sm" asChild>
-                    <Link href="/upload">Upload</Link>
-                  </Button>
+                  <Link 
+                    href="/upload"
+                    className="px-5 py-2 text-sm font-black border-3 border-black bg-[#3b82f6] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  >
+                    UPLOAD
+                  </Link>
                   <div className="relative">
                     <button
                       onClick={() => setShowProfileMenu(!showProfileMenu)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 border-3 border-black bg-white font-bold text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                     >
-                      <User size={18} />
-                      <span className="text-sm font-medium">{user.name || user.email}</span>
+                      <User size={18} strokeWidth={3} />
+                      <span>{user.name || user.email}</span>
                     </button>
                     {showProfileMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-card border rounded-lg shadow-lg py-2">
+                      <div className="absolute right-0 mt-2 w-48 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                         <Link
                           href="/profile"
-                          className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
+                          className="block px-4 py-3 text-sm font-bold border-b-3 border-black hover:bg-[#fef6e4] transition-colors"
                           onClick={() => setShowProfileMenu(false)}
                         >
-                          My Profile
+                          MY PROFILE
                         </Link>
                         <button
                           onClick={() => {
                             setShowProfileMenu(false)
                             handleLogout()
                           }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                          className="w-full text-left px-4 py-3 text-sm font-bold hover:bg-[#ff6b9d] transition-colors flex items-center gap-2"
                         >
-                          <LogOut size={16} />
-                          Logout
+                          <LogOut size={16} strokeWidth={3} />
+                          LOGOUT
                         </button>
                       </div>
                     )}
@@ -118,12 +121,18 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button size="sm" asChild>
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
+                  <Link
+                    href="/login"
+                    className="px-5 py-2 text-sm font-bold border-3 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  >
+                    LOGIN
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="px-5 py-2 text-sm font-black border-3 border-black bg-[#ff6b9d] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  >
+                    SIGN UP
+                  </Link>
                 </>
               )}
             </div>
@@ -131,49 +140,61 @@ export function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+              className="md:hidden p-2 border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
               aria-label="Toggle menu"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {isOpen ? <X size={24} strokeWidth={3} /> : <Menu size={24} strokeWidth={3} />}
             </button>
           </div>
 
           {/* Mobile Navigation */}
           {isOpen && (
-            <div className="md:hidden mt-4 pt-4 border-t border-border/20 space-y-1 pb-4">
-              <Link href="/" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                Home
+            <div className="md:hidden mt-4 pt-4 border-t-4 border-black space-y-2 pb-4">
+              <Link href="/" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                HOME
               </Link>
-              <Link href="/leaderboard" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                Leaderboard
+              <Link href="/leaderboard" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                LEADERBOARD
               </Link>
-              <Link href="/team" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                Teams
+              <Link href="/team" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                TEAMS
               </Link>
               {loading ? (
-                <div className="w-full h-20 bg-muted animate-pulse rounded-lg mt-4" />
+                <div className="w-full h-20 bg-gray-200 border-3 border-black animate-pulse mt-4" />
               ) : user ? (
                 <>
-                  <Link href="/profile" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                    Profile
+                  <Link href="/profile" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    PROFILE
                   </Link>
-                  <div className="flex gap-2 pt-4 border-t border-border/20">
-                    <Button size="sm" asChild className="flex-1">
-                      <Link href="/upload">Upload</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleLogout} className="flex-1">
-                      Logout
-                    </Button>
+                  <div className="flex gap-2 pt-4 border-t-3 border-black">
+                    <Link
+                      href="/upload"
+                      className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#3b82f6] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    >
+                      UPLOAD
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex-1 px-3 py-2 text-sm font-bold border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    >
+                      LOGOUT
+                    </button>
                   </div>
                 </>
               ) : (
-                <div className="flex gap-2 pt-4 border-t border-border/20">
-                  <Button variant="outline" size="sm" asChild className="flex-1">
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button size="sm" asChild className="flex-1">
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
+                <div className="flex gap-2 pt-4 border-t-3 border-black">
+                  <Link
+                    href="/login"
+                    className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    LOGIN
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#ff6b9d] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    SIGN UP
+                  </Link>
                 </div>
               )}
             </div>

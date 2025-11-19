@@ -5,29 +5,31 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Shield, Users, FolderOpen, BarChart3, Edit, Trash2, X } from 'lucide-react'
+import { Shield, Users, FolderOpen, BarChart3, Edit, Trash2, X, Save, UserPlus } from 'lucide-react'
 
-export default function AdminPage() {
+export default function SecretAdminPage() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [credentials, setCredentials] = useState({ email: '', password: '' })
+  const [password, setPassword] = useState('')
   
   const [stats, setStats] = useState<any>(null)
   const [teams, setTeams] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
   const [projects, setProjects] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'stats' | 'teams' | 'projects'>('stats')
+  const [activeTab, setActiveTab] = useState<'stats' | 'teams' | 'users' | 'projects'>('stats')
 
   const [editingTeam, setEditingTeam] = useState<any>(null)
+  const [editingUser, setEditingUser] = useState<any>(null)
   const [editingProject, setEditingProject] = useState<any>(null)
 
   useEffect(() => {
     checkAuth()
   }, [])
 
-  const checkAuth = async () => {
-    const adminAuth = localStorage.getItem('adminAuth')
-    if (adminAuth === 'true') {
+  const checkAuth = () => {
+    const auth = localStorage.getItem('xxxAdminAuth')
+    if (auth === 'true') {
       setIsAuthenticated(true)
       fetchData()
     }
@@ -36,43 +38,47 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    if (credentials.email === 'admin@bennett.edu.in') {
-      localStorage.setItem('adminAuth', 'true')
+    if (password === 'AdminSecure@2024') {
+      localStorage.setItem('xxxAdminAuth', 'true')
       setIsAuthenticated(true)
       fetchData()
     } else {
-      alert('Invalid credentials')
+      alert('Invalid password')
     }
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('adminAuth')
+    localStorage.removeItem('xxxAdminAuth')
     setIsAuthenticated(false)
     router.push('/')
   }
 
   const fetchData = async () => {
     try {
-      const [statsRes, teamsRes, projectsRes] = await Promise.all([
+      const [statsRes, teamsRes, usersRes, projectsRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/teams'),
+        fetch('/api/admin/users'),
         fetch('/api/admin/projects'),
       ])
 
       const statsData = await statsRes.json()
       const teamsData = await teamsRes.json()
+      const usersData = await usersRes.json()
       const projectsData = await projectsRes.json()
 
       setStats(statsData.stats)
       setTeams(teamsData.teams || [])
+      setUsers(usersData.users || [])
       setProjects(projectsData.projects || [])
     } catch (error) {
       console.error('Failed to fetch data:', error)
     }
   }
 
+  // Team operations
   const deleteTeam = async (teamId: string) => {
-    if (!confirm('Are you sure? This will delete the team and all its projects!')) return
+    if (!confirm('Delete this team and ALL its projects?')) return
     
     try {
       const res = await fetch(`/api/admin/teams/${teamId}`, { method: 'DELETE' })
@@ -107,8 +113,46 @@ export default function AdminPage() {
     }
   }
 
+  // User operations
+  const deleteUser = async (userId: string) => {
+    if (!confirm('Delete this user? This cannot be undone!')) return
+    
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
+      if (res.ok) {
+        alert('User deleted successfully')
+        fetchData()
+      } else {
+        alert('Failed to delete user')
+      }
+    } catch (error) {
+      alert('Error deleting user')
+    }
+  }
+
+  const updateUser = async (userId: string, updates: any) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      })
+      
+      if (res.ok) {
+        alert('User updated successfully')
+        setEditingUser(null)
+        fetchData()
+      } else {
+        alert('Failed to update user')
+      }
+    } catch (error) {
+      alert('Error updating user')
+    }
+  }
+
+  // Project operations
   const deleteProject = async (projectId: string) => {
-    if (!confirm('Are you sure you want to delete this project?')) return
+    if (!confirm('Delete this project?')) return
     
     try {
       const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
@@ -155,30 +199,24 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#fef6e4] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#1e1e1e] via-[#000000] to-[#1e1e1e] flex items-center justify-center px-4">
         <div className="w-full max-w-md">
-          <div className="bg-white border-4 border-black p-10 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+          <div className="bg-gradient-to-br from-[#ff6b9d] to-[#f50057] border-4 border-black p-10 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]">
             <div className="flex items-center justify-center mb-6">
-              <Shield size={64} className="text-black" strokeWidth={3} />
+              <Shield size={80} className="text-white drop-shadow-lg" strokeWidth={3} />
             </div>
-            <h1 className="text-3xl font-black mb-6 text-center uppercase">Admin Login</h1>
+            <h1 className="text-4xl font-black mb-6 text-center uppercase text-white drop-shadow-lg">Secret Admin</h1>
             <form onSubmit={handleLogin} className="space-y-4">
               <Input
-                type="email"
-                placeholder="admin@bennett.edu.in"
-                value={credentials.email}
-                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-                required
-              />
-              <Input
                 type="password"
-                placeholder="Password"
-                value={credentials.password}
-                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                placeholder="Enter secret password..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
+                className="text-center"
               />
               <Button type="submit" className="w-full" size="lg">
-                LOGIN
+                UNLOCK
               </Button>
             </form>
           </div>
@@ -200,8 +238,11 @@ export default function AdminPage() {
           
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-4">
-              <Shield size={48} strokeWidth={3} />
-              <h1 className="text-5xl font-black uppercase">Admin Dashboard</h1>
+              <Shield size={48} strokeWidth={3} className="animate-pulse" />
+              <div>
+                <h1 className="text-5xl font-black uppercase">Secret Admin Panel</h1>
+                <p className="text-sm font-bold text-white/80 mt-1">Full Access Control - /xxx</p>
+              </div>
             </div>
             <Button onClick={handleLogout} variant="destructive" size="sm">
               LOGOUT
@@ -211,18 +252,19 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex gap-3 mb-8 flex-wrap">
-          {(['stats', 'teams', 'projects'] as const).map((tab) => (
+          {(['stats', 'teams', 'users', 'projects'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 font-black border-3 border-black uppercase transition-all ${
                 activeTab === tab
-                  ? 'bg-[#3b82f6] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
+                  ? 'bg-[#ff6b9d] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
                   : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
               }`}
             >
               {tab === 'stats' && <BarChart3 size={18} strokeWidth={3} className="inline mr-2" />}
               {tab === 'teams' && <Users size={18} strokeWidth={3} className="inline mr-2" />}
+              {tab === 'users' && <UserPlus size={18} strokeWidth={3} className="inline mr-2" />}
               {tab === 'projects' && <FolderOpen size={18} strokeWidth={3} className="inline mr-2" />}
               {tab}
             </button>
@@ -277,6 +319,13 @@ export default function AdminPage() {
                       />
                     </div>
                     <div>
+                      <label className="block text-sm font-black mb-2 uppercase">Team Code</label>
+                      <Input
+                        value={editingTeam.unique_team_code}
+                        onChange={(e) => setEditingTeam({ ...editingTeam, unique_team_code: e.target.value })}
+                      />
+                    </div>
+                    <div>
                       <label className="block text-sm font-black mb-2 uppercase">Members (comma separated)</label>
                       <Input
                         value={editingTeam.members?.join(', ') || ''}
@@ -288,6 +337,7 @@ export default function AdminPage() {
                     </div>
                     <div className="flex gap-3">
                       <Button onClick={() => updateTeam(team.id, editingTeam)} size="sm">
+                        <Save size={16} strokeWidth={3} className="mr-1" />
                         SAVE
                       </Button>
                       <Button onClick={() => setEditingTeam(null)} variant="outline" size="sm">
@@ -302,6 +352,7 @@ export default function AdminPage() {
                       <div>
                         <h3 className="text-2xl font-black uppercase">{team.team_name}</h3>
                         <p className="text-sm font-bold mt-1">Code: {team.unique_team_code}</p>
+                        <p className="text-xs text-gray-600 mt-1">ID: {team.id}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button 
@@ -327,6 +378,99 @@ export default function AdminPage() {
                       <p className="text-sm font-black">
                         MEMBERS: <span className="font-normal">{team.members?.length || 0} total</span>
                       </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Users Tab */}
+        {activeTab === 'users' && (
+          <div className="space-y-4">
+            {users.map((user: any) => (
+              <div key={user.id} className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                {editingUser?.id === user.id ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-black mb-2 uppercase">Name</label>
+                      <Input
+                        value={editingUser.name}
+                        onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-black mb-2 uppercase">Email</label>
+                      <Input
+                        type="email"
+                        value={editingUser.email}
+                        onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-black mb-2 uppercase">Enrollment Number</label>
+                      <Input
+                        value={editingUser.enrollment_number || ''}
+                        onChange={(e) => setEditingUser({ ...editingUser, enrollment_number: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id={`team-leader-${user.id}`}
+                        checked={editingUser.is_team_leader || false}
+                        onChange={(e) => setEditingUser({ ...editingUser, is_team_leader: e.target.checked })}
+                        className="w-5 h-5 border-3 border-black"
+                      />
+                      <label htmlFor={`team-leader-${user.id}`} className="text-sm font-black uppercase">
+                        Team Leader
+                      </label>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button onClick={() => updateUser(user.id, editingUser)} size="sm">
+                        <Save size={16} strokeWidth={3} className="mr-1" />
+                        SAVE
+                      </Button>
+                      <Button onClick={() => setEditingUser(null)} variant="outline" size="sm">
+                        <X size={16} strokeWidth={3} className="mr-1" />
+                        CANCEL
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-2xl font-black uppercase">{user.name}</h3>
+                        <p className="text-sm font-bold mt-1">{user.email}</p>
+                        <p className="text-xs text-gray-600 mt-1">ID: {user.id}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => setEditingUser(user)} 
+                          variant="outline" 
+                          size="sm"
+                        >
+                          <Edit size={16} strokeWidth={3} className="mr-1" />
+                          EDIT
+                        </Button>
+                        <Button 
+                          onClick={() => deleteUser(user.id)} 
+                          variant="destructive" 
+                          size="sm"
+                        >
+                          <Trash2 size={16} strokeWidth={3} className="mr-1" />
+                          DELETE
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-black">ENROLLMENT: <span className="font-normal">{user.enrollment_number || 'N/A'}</span></p>
+                      <p className="text-sm font-black">TEAM LEADER: <span className="font-normal">{user.is_team_leader ? 'Yes' : 'No'}</span></p>
+                      {user.team_id && (
+                        <p className="text-sm font-black">TEAM ID: <span className="font-normal">{user.team_id}</span></p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -375,8 +519,25 @@ export default function AdminPage() {
                         <option value="Other">Other</option>
                       </select>
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-black mb-2 uppercase">GitHub URL</label>
+                        <Input
+                          value={editingProject.github_url || ''}
+                          onChange={(e) => setEditingProject({ ...editingProject, github_url: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-black mb-2 uppercase">Demo URL</label>
+                        <Input
+                          value={editingProject.demo_url || ''}
+                          onChange={(e) => setEditingProject({ ...editingProject, demo_url: e.target.value })}
+                        />
+                      </div>
+                    </div>
                     <div className="flex gap-3">
                       <Button onClick={() => updateProject(project.id, editingProject)} size="sm">
+                        <Save size={16} strokeWidth={3} className="mr-1" />
                         SAVE
                       </Button>
                       <Button onClick={() => setEditingProject(null)} variant="outline" size="sm">
@@ -392,14 +553,25 @@ export default function AdminPage() {
                         <h3 className="text-2xl font-black uppercase mb-2">{project.title}</h3>
                         <p className="text-sm font-bold mb-1">Team: {project.team_name}</p>
                         <p className="text-sm mb-3">{project.description}</p>
-                        <div className="flex gap-4 text-sm">
+                        <div className="flex gap-4 text-sm flex-wrap">
                           <span className="bg-[#c7f464] border-2 border-black px-3 py-1 font-black">
                             {project.category}
                           </span>
                           <span className="bg-[#ff6b9d] text-white border-2 border-black px-3 py-1 font-black">
                             ❤️ {project.likes_count}
                           </span>
+                          {project.github_url && (
+                            <a href={project.github_url} target="_blank" rel="noopener noreferrer" className="bg-black text-white border-2 border-black px-3 py-1 font-black hover:bg-gray-800">
+                              GITHUB
+                            </a>
+                          )}
+                          {project.demo_url && (
+                            <a href={project.demo_url} target="_blank" rel="noopener noreferrer" className="bg-[#3b82f6] text-white border-2 border-black px-3 py-1 font-black hover:bg-blue-600">
+                              DEMO
+                            </a>
+                          )}
                         </div>
+                        <p className="text-xs text-gray-600 mt-2">ID: {project.id}</p>
                       </div>
                       <div className="flex gap-2 ml-4">
                         <Button 
