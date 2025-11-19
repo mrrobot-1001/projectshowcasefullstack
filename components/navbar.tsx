@@ -64,8 +64,8 @@ export function Navbar() {
               <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
                 Home
               </Link>
-              <Link href="/projects" className="text-sm font-medium hover:text-primary transition-colors">
-                Projects
+              <Link href="/leaderboard" className="text-sm font-medium hover:text-primary transition-colors">
+                Leaderboard
               </Link>
               <Link href="/team" className="text-sm font-medium hover:text-primary transition-colors">
                 Teams
@@ -138,8 +138,8 @@ export function Navbar() {
               <Link href="/" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
                 Home
               </Link>
-              <Link href="/projects" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                Projects
+              <Link href="/leaderboard" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
+                Leaderboard
               </Link>
               <Link href="/team" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
                 Teams
