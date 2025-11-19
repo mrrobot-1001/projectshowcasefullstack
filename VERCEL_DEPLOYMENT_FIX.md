@@ -26,17 +26,26 @@ npm install --legacy-peer-deps
 
 (Used `--legacy-peer-deps` to resolve React version conflicts with vaul package)
 
-### 3. Committed changes
+### 3. Added .npmrc configuration
+Created `.npmrc` file with:
+```
+legacy-peer-deps=true
+```
+
+This tells npm (and Vercel) to always use legacy peer deps mode.
+
+### 4. Committed changes
 ```bash
 git add .
-git commit -m "Add backend implementation and remove email verification"
+git commit -m "Add .npmrc for Vercel deployment"
 git push origin main
 ```
 
 ## Result
 - ✅ Removed `pnpm-lock.yaml`
 - ✅ Generated `package-lock.json`
-- ✅ Vercel now uses npm for installation
+- ✅ Created `.npmrc` with `legacy-peer-deps=true`
+- ✅ Vercel now uses npm with legacy peer deps
 - ✅ Deployment should proceed successfully
 
 ## For Future Deployments
