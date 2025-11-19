@@ -36,9 +36,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create user' }, { status: 400 })
     }
 
-    // Small delay to ensure auth user is fully committed
-    await new Promise(resolve => setTimeout(resolve, 100))
-
     // Use service role client to bypass RLS for user creation
     const supabaseAdmin = await createServiceClient()
 
