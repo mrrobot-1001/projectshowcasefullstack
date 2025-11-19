@@ -53,8 +53,8 @@ export function Navbar() {
               <Image 
                 src="/logo.jpg" 
                 alt="Logo" 
-                width={40} 
-                height={40}
+                width={100} 
+                height={80}
                 className="w-10 h-10 object-contain"
               />
             </Link>
