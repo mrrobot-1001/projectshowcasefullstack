@@ -120,7 +120,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ projects })
+    return NextResponse.json(projects || [])
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
