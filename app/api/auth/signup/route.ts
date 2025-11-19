@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -36,8 +36,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create user' }, { status: 400 })
     }
 
+    // Use service role client to bypass RLS for user creation
+    const supabaseAdmin = await createServiceClient()
+
     // Create user profile
-    const { error: profileError } = await supabase.from('users').insert({
+    const { error: profileError } = await supabaseAdmin.from('users').insert({
       id: authData.user.id,
       email,
       name,
@@ -54,7 +57,7 @@ export async function POST(request: Request) {
     if (participating && teamData) {
       const uniqueCode = generateUniqueTeamCode()
       
-      const { data: team, error: teamError } = await supabase
+      const { data: team, error: teamError } = await supabaseAdmin
         .from('teams')
         .insert({
           team_name: teamData.teamName,
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
       teamId = team.id
 
       // Update user with team_id
-      await supabase
+      await supabaseAdmin
         .from('users')
         .update({ team_id: teamId })
         .eq('id', authData.user.id)
