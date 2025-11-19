@@ -1,12 +1,44 @@
 'use client'
 
 import Link from 'next/link'
-import { Menu, X } from 'lucide-react'
-import { useState } from 'react'
+import Image from 'next/image'
+import { Menu, X, User, LogOut } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
 export function Navbar() {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  const checkUser = async () => {
+    try {
+      const response = await fetch('/api/auth/user')
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data)
+      }
+    } catch (error) {
+      // User not logged in
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      setUser(null)
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
 
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/20">
@@ -15,10 +47,13 @@ export function Navbar() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 font-semibold text-lg hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                <span className="text-white text-sm font-bold">SC</span>
-              </div>
-              <span className="hidden sm:inline">Student Cabinet</span>
+              <Image 
+                src="/logo.png" 
+                alt="Logo" 
+                width={40} 
+                height={40}
+                className="w-10 h-10 object-contain"
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -29,9 +64,6 @@ export function Navbar() {
               <Link href="/projects" className="text-sm font-medium hover:text-primary transition-colors">
                 Projects
               </Link>
-              <Link href="/leaderboard" className="text-sm font-medium hover:text-primary transition-colors">
-                Leaderboard
-              </Link>
               <Link href="/team" className="text-sm font-medium hover:text-primary transition-colors">
                 Teams
               </Link>
@@ -39,12 +71,52 @@ export function Navbar() {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link href="/upload">Upload</Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button size="sm" asChild>
+                    <Link href="/upload">Upload</Link>
+                  </Button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <User size={18} />
+                      <span className="text-sm font-medium">{user.name || user.email}</span>
+                    </button>
+                    {showProfileMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-card border rounded-lg shadow-lg py-2">
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
+                          onClick={() => setShowProfileMenu(false)}
+                        >
+                          My Profile
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false)
+                            handleLogout()
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                        >
+                          <LogOut size={16} />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -66,20 +138,33 @@ export function Navbar() {
               <Link href="/projects" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
                 Projects
               </Link>
-              <Link href="/leaderboard" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
-                Leaderboard
-              </Link>
               <Link href="/team" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
                 Teams
               </Link>
-              <div className="flex gap-2 pt-4 border-t border-border/20">
-                <Button variant="outline" size="sm" asChild className="flex-1">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button size="sm" asChild className="flex-1">
-                  <Link href="/upload">Upload</Link>
-                </Button>
-              </div>
+              {user ? (
+                <>
+                  <Link href="/profile" className="block px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors">
+                    Profile
+                  </Link>
+                  <div className="flex gap-2 pt-4 border-t border-border/20">
+                    <Button size="sm" asChild className="flex-1">
+                      <Link href="/upload">Upload</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleLogout} className="flex-1">
+                      Logout
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex gap-2 pt-4 border-t border-border/20">
+                  <Button variant="outline" size="sm" asChild className="flex-1">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button size="sm" asChild className="flex-1">
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
