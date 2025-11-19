@@ -26,6 +26,7 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [teamCode, setTeamCode] = useState('');
+  const [userTeamCode, setUserTeamCode] = useState(''); // Store user's team code from profile
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -37,12 +38,18 @@ export default function UploadPage() {
   const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
-    // Check if user is logged in
+    // Check if user is logged in and get their team code
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/auth/user');
         if (!response.ok) {
           router.push('/login');
+          return;
+        }
+        const userData = await response.json();
+        if (userData.team_code) {
+          setUserTeamCode(userData.team_code);
+          setTeamCode(userData.team_code); // Auto-fill team code
         }
       } catch (err) {
         router.push('/login');
@@ -151,16 +158,30 @@ export default function UploadPage() {
                 <label className="block text-sm font-black mb-2 uppercase">
                   Team Code *
                 </label>
-                <Input
-                  type="text"
-                  value={teamCode}
-                  onChange={(e) => setTeamCode(e.target.value)}
-                  placeholder="TEAM-XXXXXXXX"
-                  required
-                />
-                <p className="text-sm font-bold text-gray-600 mt-2">
-                  📋 Enter your team's unique code (e.g., TEAM-A1B2C3D4)
-                </p>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={teamCode}
+                    onChange={(e) => setTeamCode(e.target.value)}
+                    placeholder="TEAM-XXXXXXXX"
+                    required
+                    className={userTeamCode ? 'bg-[#c7f464]/20' : ''}
+                  />
+                  {userTeamCode && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#c7f464] border-2 border-black px-2 py-1 text-xs font-black">
+                      ✓ AUTO-FILLED
+                    </div>
+                  )}
+                </div>
+                {userTeamCode ? (
+                  <p className="text-sm font-bold text-green-700 mt-2">
+                    ✅ Using your team code from profile
+                  </p>
+                ) : (
+                  <p className="text-sm font-bold text-gray-600 mt-2">
+                    📋 Enter your team's unique code (e.g., TEAM-A1B2C3D4) - Find it in your profile page
+                  </p>
+                )}
               </div>
 
               {/* Project Title */}

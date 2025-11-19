@@ -54,8 +54,10 @@ export async function POST(request: Request) {
 
     // If participating in showcase, create team
     let teamId = null
+    let teamCode = null
     if (participating && teamData) {
       const uniqueCode = generateUniqueTeamCode()
+      teamCode = uniqueCode
       
       const { data: team, error: teamError } = await supabaseAdmin
         .from('teams')
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       user: authData.user,
       teamId,
+      teamCode,
       message: 'Signup successful! You can now login.',
     })
   } catch (error) {

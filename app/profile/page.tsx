@@ -115,6 +115,36 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+            
+            {/* Team Code Display - if user is team leader */}
+            {user.is_team_leader && user.team_code && (
+              <div className="mt-6 relative overflow-hidden bg-gradient-to-r from-[#c7f464] to-[#a8d92e] border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-[#ff6b9d] border-4 border-black -mr-8 -mt-8 rotate-45"></div>
+                <h3 className="text-lg font-black mb-3 uppercase relative z-10 flex items-center gap-2">
+                  🎯 Your Team Code
+                </h3>
+                <div className="bg-white border-3 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-xs font-black uppercase mb-1 text-gray-600">Use this code to upload projects:</p>
+                      <code className="text-2xl font-black font-mono bg-[#fef6e4] px-3 py-2 border-2 border-black inline-block">
+                        {user.team_code}
+                      </code>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(user.team_code)
+                        alert('Team code copied to clipboard!')
+                      }}
+                      className="shrink-0 px-4 py-2 bg-[#3b82f6] text-white font-black border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all uppercase text-sm"
+                    >
+                      📋 COPY
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs font-bold mt-3 relative z-10">💡 Share this with your team to collaborate on projects</p>
+              </div>
+            )}
           </div>
 
           {/* Liked Projects by Category */}
