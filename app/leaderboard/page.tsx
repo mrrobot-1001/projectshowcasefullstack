@@ -81,15 +81,19 @@ export default function LeaderboardPage() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
-        {/* Neo-Brutalist Header */}
-        <div className="mb-10 bg-[#ff6b9d] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
-          <div className="flex items-center gap-4 mb-3">
-            <Trophy className="w-10 h-10 text-black" strokeWidth={3} />
-            <h1 className="text-5xl md:text-6xl font-black text-black uppercase tracking-tight">
+        {/* Neo-Brutalist Header with Gradients */}
+        <div className="relative overflow-hidden mb-10 bg-gradient-to-r from-[#ffd93d] via-[#ff6b9d] to-[#a855f7] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
+          {/* Decorative Elements */}
+          <div className="absolute top-2 right-8 w-16 h-16 bg-[#3b82f6] border-4 border-black rotate-45"></div>
+          <div className="absolute bottom-2 left-12 w-12 h-12 bg-[#c7f464] border-4 border-black -rotate-12"></div>
+          
+          <div className="flex items-center gap-4 mb-3 relative z-10">
+            <Trophy className="w-10 h-10 text-white drop-shadow-lg" strokeWidth={3} />
+            <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tight drop-shadow-lg">
               Leaderboard
             </h1>
           </div>
-          <p className="text-lg md:text-xl font-bold text-black">
+          <p className="text-lg md:text-xl font-bold text-white/95 relative z-10 drop-shadow">
             🏆 Top projects ranked by community votes
           </p>
         </div>

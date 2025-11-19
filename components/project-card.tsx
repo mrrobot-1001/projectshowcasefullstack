@@ -14,6 +14,26 @@ interface ProjectCardProps {
   onLike?: () => void
 }
 
+const cardBackgrounds = [
+  'bg-white',
+  'bg-[#ffe5f1]', // Light pink
+  'bg-[#e8f4ff]', // Light blue
+  'bg-[#f5ffe5]', // Light green/yellow
+  'bg-[#fff9e5]', // Light yellow
+  'bg-[#f0e5ff]', // Light purple
+]
+
+const trackColors = [
+  'bg-[#ff6b9d]',
+  'bg-[#3b82f6]',
+  'bg-[#c7f464]',
+  'bg-[#ffd93d]',
+  'bg-[#a855f7]',
+  'bg-[#22d3ee]',
+  'bg-[#10b981]',
+  'bg-[#f97316]',
+]
+
 export function ProjectCard({
   id,
   title,
@@ -32,51 +52,61 @@ export function ProjectCard({
     onLike?.()
   }
 
+  // Use id to deterministically select colors
+  const cardIndex = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const bgColor = cardBackgrounds[cardIndex % cardBackgrounds.length]
+  const trackColor = trackColors[cardIndex % trackColors.length]
+
   return (
-    <div className="group soft-shadow bg-card rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <div className={`group ${bgColor} border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200`}>
       {/* Thumbnail */}
-      <div className="relative w-full h-48 md:h-56 bg-muted overflow-hidden">
+      <div className="relative w-full h-48 md:h-56 bg-gray-100 overflow-hidden border-b-4 border-black">
         <Image
           src={thumbnail || "/placeholder.svg"}
           alt={title}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className="object-cover group-hover:scale-110 transition-transform duration-300"
         />
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-5">
+      <div className="p-5">
         {/* Track Badge */}
         <div className="mb-3">
-          <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-secondary/30 text-secondary-foreground">
+          <span className={`inline-block px-3 py-1.5 text-xs font-black ${trackColor} text-white border-2 border-black uppercase tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}>
             {track}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-base md:text-lg mb-2 line-clamp-2">
+        <h3 className="font-black text-lg md:text-xl mb-3 line-clamp-2 text-black uppercase">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+        <p className="text-sm font-medium text-gray-700 mb-5 line-clamp-2">
           {description}
         </p>
 
         {/* Like Button */}
         <button
           onClick={handleLike}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors"
+          className={`flex items-center gap-2 px-4 py-2 border-3 border-black font-bold text-sm transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+            isLiked
+              ? 'bg-[#ff6b9d] text-black'
+              : 'bg-white text-black'
+          }`}
         >
           <Heart
             size={18}
+            strokeWidth={3}
             className={`transition-all ${
               isLiked
-                ? 'fill-accent text-accent scale-110'
-                : 'hover:scale-110'
+                ? 'fill-black'
+                : ''
             }`}
           />
-          <span>{likeCount}</span>
+          <span>{likeCount} VOTES</span>
         </button>
       </div>
     </div>
