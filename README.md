@@ -17,15 +17,18 @@ A complete project showcase portal for Bennett University with full backend inte
 This project uses **immediate signup without email verification**.
 
 **You MUST disable email confirmations in Supabase:**
-- Go to Supabase Dashboard → Authentication → Settings
+- Go to Supabase Dashboard → Authentication → Settings → Email Auth
 - **UNCHECK** "Enable email confirmations"
 - Save changes
+
+**If you don't do this, signup will send verification emails and users cannot login!**
 
 See [EMAIL_SETUP_INFO.md](./EMAIL_SETUP_INFO.md) for details.
 
 ## 📚 Documentation
 
 - **[QUICKSTART.md](./QUICKSTART.md)** - Get started in 3 steps (START HERE!)
+- **[UI_OVERHAUL_SUMMARY.md](./UI_OVERHAUL_SUMMARY.md)** - 🎨 Latest UI changes and new features
 - **[VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md)** - ⚡ Fix deployment errors - Environment variables setup
 - **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Detailed database setup
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment guide
@@ -38,12 +41,14 @@ See [EMAIL_SETUP_INFO.md](./EMAIL_SETUP_INFO.md) for details.
 - ✅ Team creation with unique codes
 - ✅ Project upload with image storage
 - ✅ Voting system (max 2 likes per category)
+- ✅ User profile with liked projects by category
 - ✅ Auto-updating leaderboard
 - ✅ Admin dashboard with stats
 - ✅ Manual leaderboard manipulation
 - ✅ Project detail pages
 - ✅ Protected routes
 - ✅ Full authentication flow
+- ✅ Clean, minimal UI design
 
 ## 🛠️ Tech Stack
 
