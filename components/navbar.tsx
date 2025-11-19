@@ -23,9 +23,12 @@ export function Navbar() {
       if (response.ok) {
         const data = await response.json()
         setUser(data)
+      } else {
+        setUser(null)
       }
     } catch (error) {
       // User not logged in
+      setUser(null)
     }
   }
 

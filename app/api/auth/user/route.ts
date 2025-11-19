@@ -17,7 +17,13 @@ export async function GET() {
       .eq('id', user.id)
       .single()
 
-    return NextResponse.json({ user, profile })
+    return NextResponse.json({ 
+      id: user.id,
+      email: user.email,
+      name: profile?.name || user.user_metadata?.name,
+      phone_number: profile?.phone_number,
+      ...profile 
+    })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },

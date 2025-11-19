@@ -6,7 +6,7 @@ import { FilterPills } from '@/components/filter-pills'
 import { useState, useEffect } from 'react'
 
 export default function Home() {
-  const [projects, setProjects] = useState([])
+  const [projects, setProjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('All')
 
@@ -19,10 +19,14 @@ export default function Home() {
       const response = await fetch('/api/projects')
       if (response.ok) {
         const data = await response.json()
-        setProjects(data)
+        // Ensure data is an array
+        setProjects(Array.isArray(data) ? data : [])
+      } else {
+        setProjects([])
       }
     } catch (error) {
       console.error('Error fetching projects:', error)
+      setProjects([])
     } finally {
       setLoading(false)
     }
