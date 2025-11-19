@@ -38,33 +38,23 @@ export default function ProfilePage() {
       const userData = await userResponse.json();
       setUser(userData);
 
-      // Get liked projects grouped by category
-      const likesByCategory: Record<string, any[]> = {};
-      
-      for (const category of CATEGORIES) {
-        const response = await fetch(`/api/projects?category=${encodeURIComponent(category)}`);
-        if (response.ok) {
-          const projects = await response.json();
-          
-          // Filter projects that the user has liked
-          const liked = [];
-          for (const project of projects) {
-            const likeStatus = await fetch(`/api/likes?project_id=${project.id}`);
-            if (likeStatus.ok) {
-              const status = await likeStatus.json();
-              if (status.liked) {
-                liked.push(project);
-              }
-            }
+      // Get user's likes directly from the database
+      const likesResponse = await fetch(`/api/likes/user`);
+      if (likesResponse.ok) {
+        const likes = await likesResponse.json();
+        
+        // Group liked projects by category
+        const likesByCategory: Record<string, any[]> = {};
+        likes.forEach((like: any) => {
+          const category = like.category;
+          if (!likesByCategory[category]) {
+            likesByCategory[category] = [];
           }
-          
-          if (liked.length > 0) {
-            likesByCategory[category] = liked;
-          }
-        }
+          likesByCategory[category].push(like.project);
+        });
+        
+        setLikedProjects(likesByCategory);
       }
-      
-      setLikedProjects(likesByCategory);
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
