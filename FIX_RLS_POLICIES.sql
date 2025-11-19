@@ -1,5 +1,19 @@
--- Fix RLS policies for signup to work
+-- Fix RLS policies and foreign key constraint for signup
 -- Run this in Supabase SQL Editor
+
+-- First, check and remove the foreign key constraint that's causing issues
+-- The error happens because we're trying to insert before auth.users is fully committed
+
+-- Drop the foreign key constraint if it exists
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_id_fkey;
+
+-- Now recreate it with ON DELETE CASCADE to handle auth user deletion
+ALTER TABLE users 
+  ADD CONSTRAINT users_id_fkey 
+  FOREIGN KEY (id) 
+  REFERENCES auth.users(id) 
+  ON DELETE CASCADE 
+  DEFERRABLE INITIALLY DEFERRED;
 
 -- Drop existing policies
 DROP POLICY IF EXISTS "Users are viewable by everyone" ON users;
