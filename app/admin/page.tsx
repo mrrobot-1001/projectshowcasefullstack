@@ -1,209 +1,251 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
-import { BarChart3, Users, Heart, Eye, Trash2, Eye as Eye2 } from 'lucide-react'
-import { useState } from 'react'
-
-const STATS = [
-  {
-    label: 'Total Projects',
-    value: '2,543',
-    icon: BarChart3,
-    color: 'text-primary',
-  },
-  {
-    label: 'Total Teams',
-    value: '847',
-    icon: Users,
-    color: 'text-secondary',
-  },
-  {
-    label: 'Total Votes',
-    value: '45.2K',
-    icon: Heart,
-    color: 'text-accent',
-  },
-  {
-    label: 'Active Users',
-    value: '3,921',
-    icon: Eye,
-    color: 'text-primary',
-  },
-]
-
-const RECENT_PROJECTS = [
-  {
-    id: 1,
-    title: 'AI Chat Assistant',
-    team: 'AI Pioneers',
-    votes: 445,
-    status: 'approved',
-  },
-  {
-    id: 2,
-    title: 'Suspicious Project XYZ',
-    team: 'Unknown Team',
-    votes: 2,
-    status: 'pending',
-  },
-  {
-    id: 3,
-    title: 'Mobile Fitness App',
-    team: 'Mobile Team',
-    votes: 156,
-    status: 'approved',
-  },
-  {
-    id: 4,
-    title: 'Inappropriate Content',
-    team: 'Spam Account',
-    votes: 0,
-    status: 'flagged',
-  },
-  {
-    id: 5,
-    title: 'Game Engine Demo',
-    team: 'Game Crafters',
-    votes: 289,
-    status: 'approved',
-  },
-]
+import { Input } from '@/components/ui/input'
 
 export default function AdminPage() {
-  const [projects, setProjects] = useState(RECENT_PROJECTS)
-  const [hiddenProjects, setHiddenProjects] = useState<number[]>([])
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [credentials, setCredentials] = useState({ email: '', password: '' })
+  
+  const [stats, setStats] = useState<any>(null)
+  const [teams, setTeams] = useState<any[]>([])
+  const [projects, setProjects] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<'stats' | 'teams' | 'projects' | 'leaderboard'>('stats')
 
-  const toggleHide = (id: number) => {
-    setHiddenProjects((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    )
+  const [leaderboardEdit, setLeaderboardEdit] = useState({ projectId: '', likes: 0 })
+
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
+    const adminAuth = localStorage.getItem('adminAuth')
+    if (adminAuth === 'true') {
+      setIsAuthenticated(true)
+      fetchData()
+    }
+    setLoading(false)
   }
 
-  const deleteProject = (id: number) => {
-    setProjects((prev) => prev.filter((p) => p.id !== id))
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (
+      credentials.email === 'admin@bennett.edu.in'
+    ) {
+      localStorage.setItem('adminAuth', 'true')
+      setIsAuthenticated(true)
+      fetchData()
+    } else {
+      alert('Invalid credentials')
+    }
+  }
+
+  const fetchData = async () => {
+    try {
+      const [statsRes, teamsRes, projectsRes] = await Promise.all([
+        fetch('/api/admin/stats'),
+        fetch('/api/admin/teams'),
+        fetch('/api/admin/projects'),
+      ])
+
+      const statsData = await statsRes.json()
+      const teamsData = await teamsRes.json()
+      const projectsData = await projectsRes.json()
+
+      setStats(statsData.stats)
+      setTeams(teamsData.teams || [])
+      setProjects(projectsData.projects || [])
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    }
+  }
+
+  const updateLeaderboard = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const response = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+          project_id: leaderboardEdit.projectId,
+          new_likes_count: leaderboardEdit.likes,
+        }),
+      })
+
+      if (response.ok) {
+        alert('Leaderboard updated successfully')
+        fetchData()
+      } else {
+        alert('Failed to update leaderboard')
+      }
+    } catch (error) {
+      alert('Error updating leaderboard')
+    }
+  }
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md">
+          <div className="bg-card rounded-3xl p-8 shadow-lg">
+            <h1 className="text-2xl font-bold mb-6">Admin Login</h1>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <Input
+                type="email"
+                placeholder="Admin Email"
+                value={credentials.email}
+                onChange={(e) =>
+                  setCredentials({ ...credentials, email: e.target.value })
+                }
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={credentials.password}
+                onChange={(e) =>
+                  setCredentials({ ...credentials, password: e.target.value })
+                }
+                required
+              />
+              <Button type="submit" className="w-full">
+                Login
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen">
       <Navbar />
+      <main className="container mx-auto px-4 py-12">
+        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
 
-      <main className="container mx-auto px-4 pb-16 md:pb-20">
-        {/* Header */}
-        <section className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-lg text-muted-foreground">
-            Moderate projects and manage the platform
-          </p>
-        </section>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {STATS.map((stat) => {
-            const Icon = stat.icon
-            return (
-              <div
-                key={stat.label}
-                className="soft-shadow bg-card rounded-2xl p-6 hover:shadow-xl transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <Icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  {stat.label}
-                </p>
-                <p className="text-3xl font-bold">{stat.value}</p>
-              </div>
-            )
-          })}
+        <div className="flex gap-4 mb-8 flex-wrap">
+          {(['stats', 'teams', 'projects', 'leaderboard'] as const).map((tab) => (
+            <Button
+              key={tab}
+              variant={activeTab === tab ? 'default' : 'outline'}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Button>
+          ))}
         </div>
 
-        {/* Recent Projects */}
-        <div className="soft-shadow bg-card rounded-2xl overflow-hidden">
-          <div className="px-6 py-6 border-b border-border/20">
-            <h2 className="text-2xl font-bold">Recent Projects</h2>
+        {activeTab === 'stats' && stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-card p-6 rounded-xl shadow">
+              <h3 className="text-lg font-semibold mb-2">Total Teams</h3>
+              <p className="text-3xl font-bold">{stats.totalTeams}</p>
+            </div>
+            <div className="bg-card p-6 rounded-xl shadow">
+              <h3 className="text-lg font-semibold mb-2">Total Projects</h3>
+              <p className="text-3xl font-bold">{stats.totalProjects}</p>
+            </div>
+            <div className="bg-card p-6 rounded-xl shadow">
+              <h3 className="text-lg font-semibold mb-2">Total Users</h3>
+              <p className="text-3xl font-bold">{stats.totalUsers}</p>
+            </div>
+            <div className="bg-card p-6 rounded-xl shadow">
+              <h3 className="text-lg font-semibold mb-2">Total Likes</h3>
+              <p className="text-3xl font-bold">{stats.totalLikes}</p>
+            </div>
           </div>
+        )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border/20 bg-muted/50">
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
-                    Project
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
-                    Team
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
-                    Votes
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {projects.map((project) => (
-                  <tr
-                    key={project.id}
-                    className={`border-b border-border/10 hover:bg-muted/30 transition-colors ${
-                      hiddenProjects.includes(project.id) ? 'opacity-50' : ''
-                    }`}
-                  >
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{project.title}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm text-muted-foreground">{project.team}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{project.votes}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
-                          project.status === 'approved'
-                            ? 'bg-green-100 text-green-800'
-                            : project.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {project.status.charAt(0).toUpperCase() +
-                          project.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => toggleHide(project.id)}
-                          className="p-2 hover:bg-muted rounded-lg transition-colors"
-                          title={
-                            hiddenProjects.includes(project.id)
-                              ? 'Show'
-                              : 'Hide'
-                          }
-                        >
-                          <Eye2 className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                        </button>
-                        <button
-                          onClick={() => deleteProject(project.id)}
-                          className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive hover:text-destructive/80" />
-                        </button>
-                      </div>
-                    </td>
+        {activeTab === 'teams' && (
+          <div className="bg-card rounded-xl p-6 shadow">
+            <h2 className="text-2xl font-bold mb-4">Teams</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">Team Name</th>
+                    <th className="text-left p-2">Leader</th>
+                    <th className="text-left p-2">Code</th>
+                    <th className="text-left p-2">Members</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {teams.map((team) => (
+                    <tr key={team.id} className="border-b">
+                      <td className="p-2">{team.team_name}</td>
+                      <td className="p-2">{team.leader_name}</td>
+                      <td className="p-2 font-mono text-sm">{team.unique_team_code}</td>
+                      <td className="p-2">{team.members?.length || 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'projects' && (
+          <div className="bg-card rounded-xl p-6 shadow">
+            <h2 className="text-2xl font-bold mb-4">Projects</h2>
+            <div className="space-y-4">
+              {projects.map((project) => (
+                <div key={project.id} className="border rounded-lg p-4">
+                  <h3 className="font-bold text-lg">{project.title}</h3>
+                  <p className="text-sm text-muted-foreground">{project.team_name}</p>
+                  <p className="text-sm mt-2 line-clamp-2">{project.description}</p>
+                  <div className="flex gap-4 mt-2 text-sm">
+                    <span>Category: {project.category}</span>
+                    <span>Likes: {project.likes_count}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">ID: {project.id}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'leaderboard' && (
+          <div className="bg-card rounded-xl p-6 shadow">
+            <h2 className="text-2xl font-bold mb-4">Manipulate Leaderboard</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Use this to manually adjust project likes count. Get Project ID from Projects tab.
+            </p>
+            <form onSubmit={updateLeaderboard} className="space-y-4 max-w-md">
+              <Input
+                type="text"
+                placeholder="Project ID (from Projects tab)"
+                value={leaderboardEdit.projectId}
+                onChange={(e) =>
+                  setLeaderboardEdit({ ...leaderboardEdit, projectId: e.target.value })
+                }
+                required
+              />
+              <Input
+                type="number"
+                placeholder="New Likes Count"
+                value={leaderboardEdit.likes || ''}
+                onChange={(e) =>
+                  setLeaderboardEdit({ ...leaderboardEdit, likes: parseInt(e.target.value) || 0 })
+                }
+                required
+                min="0"
+              />
+              <Button type="submit">Update Likes Count</Button>
+            </form>
+          </div>
+        )}
       </main>
     </div>
   )
