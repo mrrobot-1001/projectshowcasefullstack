@@ -90,9 +90,11 @@ export default function SecretAdminPage() {
         alert('Team deleted successfully')
         fetchData()
       } else {
-        alert('Failed to delete team')
+        const error = await res.json()
+        alert(`Failed to delete team: ${error.error || 'Unknown error'}`)
       }
     } catch (error) {
+      console.error('Error deleting team:', error)
       alert('Error deleting team')
     }
   }
@@ -110,9 +112,11 @@ export default function SecretAdminPage() {
         setEditingTeam(null)
         fetchData()
       } else {
-        alert('Failed to update team')
+        const error = await res.json()
+        alert(`Failed to update team: ${error.error || 'Unknown error'}`)
       }
     } catch (error) {
+      console.error('Error updating team:', error)
       alert('Error updating team')
     }
   }
@@ -159,21 +163,23 @@ export default function SecretAdminPage() {
     if (!confirm('Delete this project?')) return
     
     try {
-      const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/projects/${projectId}`, { method: 'DELETE' })
       if (res.ok) {
         alert('Project deleted successfully')
         fetchData()
       } else {
-        alert('Failed to delete project')
+        const error = await res.json()
+        alert(`Failed to delete project: ${error.error || 'Unknown error'}`)
       }
     } catch (error) {
+      console.error('Error deleting project:', error)
       alert('Error deleting project')
     }
   }
 
   const updateProject = async (projectId: string, updates: any) => {
     try {
-      const res = await fetch(`/api/projects/${projectId}`, {
+      const res = await fetch(`/api/admin/projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
