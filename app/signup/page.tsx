@@ -54,9 +54,15 @@ export default function SignupPage() {
     setError('')
     setSuccess('')
 
-    // Validation
-    if (!formData.email.endsWith('@bennett.edu.in')) {
-      setError('Only @bennett.edu.in email addresses are allowed')
+    // Validation for Bennett email
+    const emailLower = formData.email.toLowerCase().trim()
+    const isValidEmail = (
+      emailLower.endsWith('@bennett.edu.in') || 
+      emailLower.endsWith('@bennettu.onmicrosoft.com')
+    ) && !emailLower.includes('#ext#')
+    
+    if (!isValidEmail) {
+      setError('Only Bennett University email addresses (@bennett.edu.in or @bennettu.onmicrosoft.com) are allowed. External guest accounts are not permitted.')
       return
     }
 
@@ -239,13 +245,13 @@ export default function SignupPage() {
                 <Input
                   type="email"
                   name="email"
-                  placeholder="your.name@bennett.edu.in"
+                  placeholder="your.name@bennett.edu.in or @bennettu.onmicrosoft.com"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
                 />
                 <p className="text-xs font-bold text-gray-600">
-                  Must be a Bennett University email address
+                  ℹ️ Only Bennett University email addresses (@bennett.edu.in or @bennettu.onmicrosoft.com) are allowed
                 </p>
               </div>
 
@@ -320,7 +326,7 @@ export default function SignupPage() {
                   <div className="space-y-3">
                     <label className="text-sm font-black uppercase">Team Members</label>
                     <p className="text-xs font-bold text-gray-600">
-                      You are the team leader. Add your team members below.
+                      You are the team leader. Add your team members below (Bennett emails only).
                     </p>
 
                     {formData.members.map((member, index) => (
