@@ -79,6 +79,9 @@ See [EMAIL_SETUP_INFO.md](./EMAIL_SETUP_INFO.md) for details.
 Deploy to Vercel in ~15 minutes:
 
 ```bash
+# Install dependencies (use npm, not pnpm)
+npm install --legacy-peer-deps
+
 # Push to GitHub
 git add .
 git commit -m "Deploy project showcase"
@@ -87,6 +90,8 @@ git push origin main
 # Import to Vercel and add environment variables
 # See DEPLOYMENT_GUIDE.md for details
 ```
+
+**Note:** This project uses npm. If you encounter deployment issues, see [VERCEL_DEPLOYMENT_FIX.md](./VERCEL_DEPLOYMENT_FIX.md).
 
 ## 🔧 Environment Variables
 
