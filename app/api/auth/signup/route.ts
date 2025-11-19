@@ -1,14 +1,15 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { isValidBennettEmail, getBennettEmailError } from '@/lib/email-validation'
 
 export async function POST(request: Request) {
   try {
     const { email, password, name, phone_number, participating, teamData } = await request.json()
 
-    // Validate Bennett email
-    if (!email.endsWith('@bennett.edu.in')) {
+    // Validate Bennett email with centralized validation
+    if (!isValidBennettEmail(email)) {
       return NextResponse.json(
-        { error: 'Only @bennett.edu.in email addresses are allowed' },
+        { error: getBennettEmailError(email) },
         { status: 400 }
       )
     }
@@ -56,6 +57,22 @@ export async function POST(request: Request) {
     let teamId = null
     let teamCode = null
     if (participating && teamData) {
+      // Validate team member emails
+      if (teamData.members && Array.isArray(teamData.members)) {
+        const invalidMembers = teamData.members
+          .filter((member: any) => member.email) // Only check non-empty emails
+          .filter((member: any) => !isValidBennettEmail(member.email))
+        
+        if (invalidMembers.length > 0) {
+          return NextResponse.json(
+            { 
+              error: `Invalid team member email(s): ${invalidMembers.map((m: any) => m.email).join(', ')}. Only Bennett University emails are allowed.` 
+            },
+            { status: 400 }
+          )
+        }
+      }
+      
       const uniqueCode = generateUniqueTeamCode()
       teamCode = uniqueCode
       
