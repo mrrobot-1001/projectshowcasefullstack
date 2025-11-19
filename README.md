@@ -26,6 +26,7 @@ See [EMAIL_SETUP_INFO.md](./EMAIL_SETUP_INFO.md) for details.
 ## 📚 Documentation
 
 - **[QUICKSTART.md](./QUICKSTART.md)** - Get started in 3 steps (START HERE!)
+- **[VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md)** - ⚡ Fix deployment errors - Environment variables setup
 - **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Detailed database setup
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment guide
 - **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - What was built
