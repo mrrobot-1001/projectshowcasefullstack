@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       email,
       password,
       options: {
-        emailRedirectTo: undefined,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/`,
         data: {
           name,
           phone_number,
