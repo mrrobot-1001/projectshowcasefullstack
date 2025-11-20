@@ -85,22 +85,26 @@ export default function TeamPage() {
     <div className="min-h-screen bg-[#fef6e4]">
       <Navbar />
 
-      <main className="container mx-auto px-4 py-10 max-w-6xl">
+      <main className="w-full">
         {/* Header with Gradients */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-[#ff6b9d] via-[#ff4081] to-[#f50057] border-4 border-black p-8 mb-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
+        <section className="relative overflow-hidden px-4 py-12 md:py-16 border-b-4 border-black bg-gradient-to-r from-[#ff6b9d] via-[#ff4081] to-[#f50057]">
           {/* Decorative Elements */}
-          <div className="absolute top-2 right-12 w-20 h-20 bg-[#c7f464] border-4 border-black rotate-45"></div>
-          <div className="absolute bottom-2 left-16 w-14 h-14 bg-[#3b82f6] border-4 border-black -rotate-12"></div>
+          <div className="absolute top-6 right-12 w-20 h-20 bg-[#c7f464] border-4 border-black rotate-45 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
+          <div className="absolute bottom-8 left-16 w-16 h-16 bg-[#3b82f6] border-4 border-black -rotate-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
           <div className="absolute top-1/2 right-1/3 w-12 h-12 bg-[#ffd93d] border-4 border-black rotate-12"></div>
           
-          <div className="flex items-center gap-4 mb-3 relative z-10">
-            <Users className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={3} />
-            <h1 className="text-5xl font-black text-white uppercase drop-shadow-lg">Team Management</h1>
+          <div className="container mx-auto max-w-6xl relative z-10">
+            <div className="flex items-center gap-4 mb-4">
+              <Users className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-lg" strokeWidth={3} />
+              <h1 className="text-4xl md:text-6xl font-black text-white uppercase drop-shadow-lg">Team Management</h1>
+            </div>
+            <p className="text-lg md:text-xl font-bold text-white/95 drop-shadow">
+                Manage your team and projects
+            </p>
           </div>
-          <p className="text-lg font-bold text-white/95 relative z-10 drop-shadow">
-            Manage your team and projects
-          </p>
-        </div>
+        </section>
+
+        <div className="container mx-auto px-4 py-8 md:py-10 max-w-6xl">
 
         {loading ? (
           <div className="bg-white border-4 border-black p-12 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -235,6 +239,7 @@ export default function TeamPage() {
             )}
           </div>
         )}
+        </div>
       </main>
     </div>
   )

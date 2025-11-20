@@ -53,7 +53,7 @@ export default function Home() {
               Project Showcase
             </h1>
             <p className="text-lg md:text-xl font-bold text-white/95 drop-shadow">
-              🚀 Explore innovative projects from Bennett University students
+                Explore innovative projects from Bennett University students
             </p>
           </div>
         </section>

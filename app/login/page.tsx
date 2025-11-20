@@ -58,6 +58,18 @@ export default function LoginPage() {
       {/* Login Card */}
       <div className="w-full max-w-md relative z-10">
         <div className="bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8 md:p-10">
+          {/* Home Button */}
+          <div className="mb-6 flex justify-center">
+            <Link href="/">
+              <Button
+                type="button"
+                className="bg-[#ff6b9d] hover:bg-[#f50057] text-white font-black uppercase border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >
+                  Home
+              </Button>
+            </Link>
+          </div>
+
           {/* Header */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-black mb-3 uppercase">Welcome Back</h1>
