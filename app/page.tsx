@@ -3,7 +3,19 @@
 import { Navbar } from '@/components/navbar'
 import { ProjectCard } from '@/components/project-card'
 import { FilterPills } from '@/components/filter-pills'
+import { ProjectCardSkeleton } from '@/components/project-card-skeleton'
 import { useState, useEffect, useMemo, useCallback } from 'react'
+
+// Prefetch projects on hover
+let projectsCache: any[] | null = null
+let cacheTime = 0
+const CACHE_DURATION = 10000 // 10 seconds
+
+const prefetchProjects = () => {
+  if (typeof window !== 'undefined') {
+    fetch('/api/projects').catch(() => {})
+  }
+}
 
 export default function Home() {
   const [projects, setProjects] = useState<any[]>([])
@@ -15,13 +27,25 @@ export default function Home() {
   }, [])
 
   const fetchProjects = useCallback(async () => {
+    // Use cache if available and fresh
+    const now = Date.now()
+    if (projectsCache && (now - cacheTime) < CACHE_DURATION) {
+      setProjects(projectsCache)
+      setLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('/api/projects', {
-        next: { revalidate: 10 }
+        cache: 'default'
       })
       if (response.ok) {
         const data = await response.json()
-        setProjects(Array.isArray(data) ? data : [])
+        const projectsArray = Array.isArray(data) ? data : []
+        setProjects(projectsArray)
+        // Update cache
+        projectsCache = projectsArray
+        cacheTime = now
       } else {
         setProjects([])
       }
@@ -33,9 +57,9 @@ export default function Home() {
     }
   }, [])
 
-  const filteredProjects = useMemo(() => 
-    selectedCategory === 'All' 
-      ? projects 
+  const filteredProjects = useMemo(() =>
+    selectedCategory === 'All'
+      ? projects
       : projects.filter((p: any) => p.category === selectedCategory),
     [selectedCategory, projects]
   )
@@ -47,7 +71,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      
+
       <main className="w-full">
         {/* Refined Neo-Brutalist Header */}
         <section className="relative overflow-hidden px-4 sm:px-6 py-20 md:py-28 lg:py-36 border-b-4 border-black bg-gradient-to-br from-gray-900 via-gray-800 to-black">
@@ -56,32 +80,32 @@ export default function Home() {
             backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
             backgroundSize: '50px 50px'
           }}></div>
-          
+
           {/* Floating Geometric Shapes */}
           <div className="absolute top-16 right-24 w-20 h-20 bg-white/5 border-2 border-white/10 rotate-12 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(255,255,255,0.05)]"></div>
           <div className="absolute top-32 right-48 w-12 h-12 bg-pink-500/10 border-2 border-pink-400/20 -rotate-6 backdrop-blur-sm"></div>
           <div className="absolute bottom-20 left-24 w-16 h-16 bg-white/5 border-2 border-white/10 rotate-45 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(255,255,255,0.05)]"></div>
           <div className="absolute bottom-40 left-56 w-10 h-10 bg-blue-500/10 border-2 border-blue-400/20 -rotate-12 backdrop-blur-sm"></div>
-          
+
           {/* Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-pink-500/30 to-transparent"></div>
-          
+
           <div className="container mx-auto max-w-7xl relative z-10">
             <div className="max-w-4xl">
               {/* Version Badge */}
               <div className="inline-block mb-6 px-4 py-2 bg-white/10 border-2 border-white/20 backdrop-blur-md shadow-[3px_3px_0px_0px_rgba(255,255,255,0.1)]">
                 <span className="text-sm font-bold text-white/80 tracking-wider">VERSION 2.0</span>
               </div>
-              
+
               <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-white tracking-tight leading-[0.9]">
-                Project<br/>Showcase
+                Project<br />Showcase
               </h1>
-              
+
               <div className="max-w-2xl">
                 <p className="text-lg md:text-xl lg:text-2xl font-medium text-white/70 leading-relaxed mb-8">
                   Discover innovative projects from Bennett University students
                 </p>
-                
+
                 {/* Stats Bar */}
                 <div className="flex flex-wrap gap-6 text-white/60">
                   <div className="flex items-center gap-2">
@@ -111,9 +135,10 @@ export default function Home() {
             </div>
 
             {loading ? (
-              <div className="bg-white border-3 border-black p-16 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="inline-block w-8 h-8 border-3 border-black border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-lg font-bold text-black">Loading projects...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ProjectCardSkeleton key={i} />
+                ))}
               </div>
             ) : filteredProjects.length === 0 ? (
               <div className="bg-white border-3 border-black p-16 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -126,9 +151,9 @@ export default function Home() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {filteredProjects.map((project: any) => (
-                  <ProjectCard 
-                    key={project.id} 
-                    {...project} 
+                  <ProjectCard
+                    key={project.id}
+                    {...project}
                     onLikeUpdate={fetchProjects}
                   />
                 ))}

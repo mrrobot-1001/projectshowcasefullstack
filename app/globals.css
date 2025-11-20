@@ -121,10 +121,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Smooth transitions */
   * {
     @apply transition-all duration-200 ease-out;
@@ -132,45 +133,52 @@
 }
 
 @layer components {
+
   /* Glassmorphism effect for navbar */
   .glass {
     @apply bg-card/40 backdrop-blur-md border border-border/20 shadow-sm;
   }
-  
+
   /* Soft shadow */
   .soft-shadow {
     @apply shadow-lg shadow-black/5;
   }
-  
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+    display: none;
+    /* Chrome, Safari and Opera */
   }
 }
 
 @layer utilities {
+
   /* Mobile navbar animations */
   @keyframes slideDown {
     from {
       opacity: 0;
       transform: translateY(-10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-  
+
   @keyframes fadeInUp {
     from {
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);

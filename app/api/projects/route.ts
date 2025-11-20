@@ -105,6 +105,7 @@ export async function GET(request: Request) {
       .from('projects')
       .select('*')
       .order('likes_count', { ascending: false })
+      .limit(100) // Limit results for better performance
 
     if (category && category !== 'All') {
       query = query.eq('category', category)
@@ -120,7 +121,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json(projects || [])
+    // Add caching headers
+    return NextResponse.json(projects || [], {
+      headers: {
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
+      }
+    })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
