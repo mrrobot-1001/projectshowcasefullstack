@@ -48,7 +48,7 @@ export default function ProfilePage() {
       // Process likes
       if (likesResponse.ok) {
         const likes = await likesResponse.json();
-        
+
         // Group liked projects by category
         const likesByCategory: Record<string, any[]> = {};
         likes.forEach((like: any) => {
@@ -58,7 +58,7 @@ export default function ProfilePage() {
           }
           likesByCategory[category].push(like.project);
         });
-        
+
         setLikedProjects(likesByCategory);
       }
     } catch (error) {
@@ -106,7 +106,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#fef6e4]">
       <Navbar />
-      
+
       <main className="py-6 sm:py-8 md:py-10 px-3 sm:px-4 md:px-6">
         <div className="max-w-5xl mx-auto">
           {/* Profile Header */}
@@ -137,7 +137,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Team Code Display - if user is team leader */}
             {user.is_team_leader && user.team_code && (
               <div className="mt-4 sm:mt-6 relative overflow-hidden bg-gradient-to-r from-[#c7f464] to-[#a8d92e] border-3 sm:border-4 border-black p-4 sm:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">

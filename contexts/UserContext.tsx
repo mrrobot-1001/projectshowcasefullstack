@@ -27,17 +27,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const response = await fetch('/api/auth/user', {
         cache: 'no-store'
       })
-      console.log('User check response:', response.status)
       if (response.ok) {
         const data = await response.json()
-        console.log('User data:', data)
         setUser(data)
       } else {
-        console.log('No user logged in')
         setUser(null)
       }
     } catch (error) {
-      console.error('Error checking user:', error)
       setUser(null)
     } finally {
       setLoading(false)

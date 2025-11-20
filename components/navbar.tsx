@@ -16,8 +16,6 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
-  console.log('Navbar - User:', user, 'Loading:', loading)
-
   const navigate = (path: string) => {
     startTransition(() => {
       router.push(path)
@@ -41,14 +39,14 @@ export function Navbar() {
         <div className="container mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               className="flex items-center gap-2 font-black text-lg hover:translate-x-[2px] hover:translate-y-[2px] transition-transform"
             >
-              <Image 
-                src="/logo.jpg" 
-                alt="Logo" 
-                width={120} 
+              <Image
+                src="/logo.jpg"
+                alt="Logo"
+                width={120}
                 height={60}
                 className="h-12 md:h-14 w-auto object-contain"
                 priority

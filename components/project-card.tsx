@@ -54,28 +54,35 @@ export const ProjectCard = memo(function ProjectCard({
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(likes_count || likes || 0)
   const [loading, setLoading] = useState(false)
+  const [checkingLike, setCheckingLike] = useState(true)
 
   const imageUrl = image_url || thumbnail || '/placeholder.svg'
   const projectTrack = category || track || 'General'
 
   // Check if user has already liked this project
   useEffect(() => {
-    checkLikeStatus()
-  }, [id])
-
-  const checkLikeStatus = async () => {
-    try {
-      const response = await fetch(`/api/likes?project_id=${id}`, {
-        next: { revalidate: 5 }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setIsLiked(data.liked)
+    let mounted = true
+    
+    const checkLikeStatus = async () => {
+      try {
+        const response = await fetch(`/api/likes?project_id=${id}`)
+        if (response.ok && mounted) {
+          const data = await response.json()
+          setIsLiked(data.liked)
+        }
+      } catch (error) {
+        // Silently fail - user might not be logged in
+      } finally {
+        if (mounted) setCheckingLike(false)
       }
-    } catch (error) {
-      console.error('Error checking like status:', error)
     }
-  }
+    
+    checkLikeStatus()
+    
+    return () => {
+      mounted = false
+    }
+  }, [id])
 
   const handleLike = async () => {
     if (loading) return
@@ -123,7 +130,11 @@ export const ProjectCard = memo(function ProjectCard({
           src={imageUrl}
           alt={title}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover group-hover:scale-110 transition-transform duration-300"
+          loading="lazy"
+          placeholder="blur"
+          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
         />
       </div>
 
