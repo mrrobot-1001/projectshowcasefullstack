@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 const CATEGORIES = [
   { name: 'All', color: 'bg-black' },
   { name: 'Web Development', color: 'bg-[#3b82f6]' },
@@ -19,7 +21,7 @@ interface FilterPillsProps {
   selectedCategory: string
 }
 
-export function FilterPills({ onSelectCategory, selectedCategory }: FilterPillsProps) {
+export const FilterPills = memo(function FilterPills({ onSelectCategory, selectedCategory }: FilterPillsProps) {
   return (
     <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
       {CATEGORIES.map((category) => (
@@ -37,4 +39,4 @@ export function FilterPills({ onSelectCategory, selectedCategory }: FilterPillsP
       ))}
     </div>
   )
-}
+})
