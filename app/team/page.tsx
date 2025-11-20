@@ -29,16 +29,17 @@ export default function TeamPage() {
 
   const fetchTeamData = async () => {
     try {
-      const userRes = await fetch('/api/auth/user')
+      // Fetch user and team data in parallel for faster loading
+      const [userRes, teamRes] = await Promise.all([
+        fetch('/api/auth/user'),
+        fetch('/api/teams/my-team')
+      ]);
+
       if (!userRes.ok) {
         router.push('/login')
         return
       }
       
-      const user = await userRes.json()
-      
-      // Fetch team details - now works for both team leaders and members
-      const teamRes = await fetch(`/api/teams/my-team`)
       if (teamRes.ok) {
         const team = await teamRes.json()
         setTeamData(team)

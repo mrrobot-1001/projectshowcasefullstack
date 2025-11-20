@@ -140,58 +140,84 @@ export function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-2 border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+              className="md:hidden p-2 border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
               aria-label="Toggle menu"
             >
-              {isOpen ? <X size={24} strokeWidth={3} /> : <Menu size={24} strokeWidth={3} />}
+              {isOpen ? (
+                <X size={24} strokeWidth={3} className="animate-[spin_0.3s_ease-in-out]" />
+              ) : (
+                <Menu size={24} strokeWidth={3} />
+              )}
             </button>
           </div>
 
           {/* Mobile Navigation */}
           {isOpen && (
-            <div className="md:hidden mt-4 pt-4 border-t-4 border-black space-y-2 pb-4">
-              <Link href="/" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            <div className="md:hidden mt-4 pt-4 border-t-4 border-black space-y-2 pb-4 animate-[slideDown_0.3s_ease-out]">
+              <Link 
+                href="/" 
+                className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.05s_both]"
+                onClick={() => setIsOpen(false)}
+              >
                 HOME
               </Link>
-              <Link href="/leaderboard" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              <Link 
+                href="/leaderboard" 
+                className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.1s_both]"
+                onClick={() => setIsOpen(false)}
+              >
                 LEADERBOARD
               </Link>
-              <Link href="/team" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              <Link 
+                href="/team" 
+                className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.15s_both]"
+                onClick={() => setIsOpen(false)}
+              >
                 TEAMS
               </Link>
               {loading ? (
                 <div className="w-full h-20 bg-gray-200 border-3 border-black animate-pulse mt-4" />
               ) : user ? (
                 <>
-                  <Link href="/profile" className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <Link 
+                    href="/profile" 
+                    className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.2s_both]"
+                    onClick={() => setIsOpen(false)}
+                  >
                     PROFILE
                   </Link>
-                  <div className="flex gap-2 pt-4 border-t-3 border-black">
+                  <div className="flex gap-2 pt-4 border-t-3 border-black animate-[fadeInUp_0.3s_ease-out_0.25s_both]">
                     <Link
                       href="/upload"
-                      className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#3b82f6] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                      className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#3b82f6] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
+                      onClick={() => setIsOpen(false)}
                     >
                       UPLOAD
                     </Link>
                     <button
-                      onClick={handleLogout}
-                      className="flex-1 px-3 py-2 text-sm font-bold border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                      onClick={() => {
+                        setIsOpen(false)
+                        handleLogout()
+                      }}
+                      className="flex-1 px-3 py-2 text-sm font-bold border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
                     >
                       LOGOUT
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="flex gap-2 pt-4 border-t-3 border-black">
+                <div className="flex gap-2 pt-4 border-t-3 border-black animate-[fadeInUp_0.3s_ease-out_0.2s_both]">
                   <Link
                     href="/login"
-                    className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
+                    onClick={() => setIsOpen(false)}
                   >
                     LOGIN
                   </Link>
                   <Link
                     href="/signup"
-                    className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#ff6b9d] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#ff6b9d] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
+                    onClick={() => setIsOpen(false)}
                   >
                     SIGN UP
                   </Link>

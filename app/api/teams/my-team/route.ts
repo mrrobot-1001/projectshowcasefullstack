@@ -62,6 +62,10 @@ export async function GET() {
     return NextResponse.json({
       ...team,
       isTeamLeader: profile.is_team_leader
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=5, stale-while-revalidate=10'
+      }
     })
   } catch (error) {
     console.error('Error in my-team endpoint:', error)

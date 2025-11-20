@@ -13,6 +13,7 @@ export async function GET(request: Request) {
       .select('id, title, team_name, category, likes_count')
       .order('likes_count', { ascending: false })
       .order('created_at', { ascending: true })
+      .limit(100) // Limit results for faster loading
 
     if (category && category !== 'All') {
       query = query.eq('category', category)
@@ -30,7 +31,11 @@ export async function GET(request: Request) {
       rank: index + 1,
     })) || []
 
-    return NextResponse.json({ leaderboard })
+    return NextResponse.json({ leaderboard }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30'
+      }
+    })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -28,6 +28,7 @@ export async function GET() {
         )
       `)
       .eq('user_id', user.id)
+      .limit(50) // Limit for performance
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
@@ -41,7 +42,11 @@ export async function GET() {
       project: like.project
     }))
 
-    return NextResponse.json(formattedLikes)
+    return NextResponse.json(formattedLikes, {
+      headers: {
+        'Cache-Control': 'private, max-age=5, stale-while-revalidate=10'
+      }
+    })
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
