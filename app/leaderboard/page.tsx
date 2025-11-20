@@ -80,23 +80,28 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-[#fef6e4]">
       <Navbar />
 
-      <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
+      <main className="w-full">
         {/* Neo-Brutalist Header with Gradients */}
-        <div className="relative overflow-hidden mb-10 bg-gradient-to-r from-[#ffd93d] via-[#ff6b9d] to-[#a855f7] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
+        <section className="relative overflow-hidden px-4 py-12 md:py-16 border-b-4 border-black bg-gradient-to-br from-[#ff6b9d] via-[#ff4081] to-[#f50057]">
           {/* Decorative Elements */}
-          <div className="absolute top-2 right-8 w-16 h-16 bg-[#3b82f6] border-4 border-black rotate-45"></div>
-          <div className="absolute bottom-2 left-12 w-12 h-12 bg-[#c7f464] border-4 border-black -rotate-12"></div>
+          <div className="absolute top-6 right-12 w-20 h-20 bg-[#c7f464] border-4 border-black rotate-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
+          <div className="absolute bottom-8 left-16 w-16 h-16 bg-[#3b82f6] border-4 border-black -rotate-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
+          <div className="absolute top-1/2 right-1/4 w-12 h-12 bg-[#ffd93d] border-4 border-black rotate-45"></div>
           
-          <div className="flex items-center gap-4 mb-3 relative z-10">
-            <Trophy className="w-10 h-10 text-white drop-shadow-lg" strokeWidth={3} />
-            <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tight drop-shadow-lg">
-              Leaderboard
-            </h1>
+          <div className="container mx-auto max-w-7xl relative z-10">
+            <div className="flex items-center gap-4 mb-4">
+              <Trophy className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-lg" strokeWidth={3} />
+              <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight drop-shadow-lg">
+                Leaderboard
+              </h1>
+            </div>
+            <p className="text-lg md:text-xl font-bold text-white/95 drop-shadow">
+              🏆 Top projects ranked by community votes
+            </p>
           </div>
-          <p className="text-lg md:text-xl font-bold text-white/95 relative z-10 drop-shadow">
-            Top projects ranked by community votes
-          </p>
-        </div>
+        </section>
+
+        <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
 
         {/* Category Filter Pills */}
         <div className="mb-8 flex gap-3 overflow-x-auto pb-3">
@@ -204,6 +209,7 @@ export default function LeaderboardPage() {
             </div>
           </div>
         )}
+        </div>
       </main>
     </div>
   )

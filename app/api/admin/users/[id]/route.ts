@@ -8,20 +8,27 @@ const supabase = createClient(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const updates = await request.json()
+    
+    console.log('Updating user:', id, updates)
     
     const { data, error } = await supabase
       .from('users')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Error updating user:', error)
+      throw error
+    }
 
+    console.log('User updated successfully:', data)
     return NextResponse.json({ user: data })
   } catch (error) {
     console.error('Error updating user:', error)
@@ -34,43 +41,43 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // First, get user's projects and delete their likes
-    const { data: userProjects } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('team_id', params.id)
-
-    if (userProjects) {
-      for (const project of userProjects) {
-        await supabase
-          .from('likes')
-          .delete()
-          .eq('project_id', project.id)
-      }
-    }
-
-    // Delete user's likes
-    await supabase
+    const { id } = await params
+    
+    console.log('Attempting to delete user:', id)
+    
+    // First, delete all likes made by this user
+    console.log('Deleting likes by user:', id)
+    const { error: likesError } = await supabase
       .from('likes')
       .delete()
-      .eq('user_id', params.id)
+      .eq('user_id', id)
 
-    // Delete the user
+    if (likesError) {
+      console.error('Error deleting user likes:', likesError)
+      // Continue anyway
+    }
+
+    // Delete the user from auth (this will cascade to users table if set up properly)
+    console.log('Deleting user from database:', id)
     const { error: userError } = await supabase
       .from('users')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
-    if (userError) throw userError
+    if (userError) {
+      console.error('Error deleting user:', userError)
+      throw userError
+    }
 
-    return NextResponse.json({ success: true })
+    console.log('User deleted successfully:', id)
+    return NextResponse.json({ success: true, message: 'User deleted successfully' })
   } catch (error) {
     console.error('Error deleting user:', error)
     return NextResponse.json(
-      { error: 'Failed to delete user' },
+      { error: error instanceof Error ? error.message : 'Failed to delete user' },
       { status: 500 }
     )
   }
