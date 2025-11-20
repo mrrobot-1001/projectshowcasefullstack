@@ -98,7 +98,7 @@ export default function TeamPage() {
             <h1 className="text-5xl font-black text-white uppercase drop-shadow-lg">Team Management</h1>
           </div>
           <p className="text-lg font-bold text-white/95 relative z-10 drop-shadow">
-            ⚙️ Manage your team and projects
+            Manage your team and projects
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export default function TeamPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {projects.map((project) => (
                   <div key={project.id} className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                     {editMode && editProject?.id === project.id ? (
