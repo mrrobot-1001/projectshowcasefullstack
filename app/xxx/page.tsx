@@ -20,6 +20,10 @@ export default function SecretAdminPage() {
   const [scores, setScores] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'stats' | 'teams' | 'users' | 'projects' | 'likes' | 'results'>('stats')
   const [dataLoading, setDataLoading] = useState(false)
+  
+  // Results filters
+  const [selectedResultCategory, setSelectedResultCategory] = useState('All')
+  const [selectedJudge, setSelectedJudge] = useState('All')
 
   const [editingTeam, setEditingTeam] = useState<any>(null)
   const [editingUser, setEditingUser] = useState<any>(null)
@@ -771,9 +775,9 @@ export default function SecretAdminPage() {
               <div>
                 <h2 className="text-3xl font-black uppercase flex items-center gap-3">
                   <Trophy size={32} strokeWidth={3} />
-                  Judging Results
+                  Judging Results & Rankings
                 </h2>
-                <p className="font-bold mt-1">Real-time scoring and rankings</p>
+                <p className="font-bold mt-1">Cumulative scores and category-based rankings</p>
               </div>
               <Button 
                 onClick={fetchData} 
@@ -781,18 +785,9 @@ export default function SecretAdminPage() {
                 className="bg-white text-black hover:bg-gray-100 border-3 border-black"
               >
                 <RotateCcw size={18} strokeWidth={3} className="mr-2" />
-                REFRESH DATA
+                REFRESH
               </Button>
             </div>
-
-            {process.env.NODE_ENV === 'development' && (
-              <div className="bg-yellow-100 border-3 border-black p-4">
-                <p className="font-black">DEBUG INFO:</p>
-                <p>Scores count: {scores.length}</p>
-                <p>Projects count: {projects.length}</p>
-                <p>Data loading: {dataLoading ? 'Yes' : 'No'}</p>
-              </div>
-            )}
 
             {dataLoading ? (
               <div className="text-center py-20">
@@ -808,318 +803,208 @@ export default function SecretAdminPage() {
               </div>
             ) : (
               <>
-                {/* View Toggle */}
-                <div className="flex gap-3 flex-wrap">
-                  {(['project', 'category', 'judge'] as const).map((view) => (
-                    <button
-                      key={view}
-                      onClick={() => {
-                        const elem = document.getElementById(`${view}-view`)
-                        elem?.scrollIntoView({ behavior: 'smooth' })
-                      }}
-                      className="px-4 py-2 font-black border-3 border-black uppercase bg-white hover:bg-[#a855f7] hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                    >
-                      {view} VIEW
-                    </button>
-                  ))}
-                </div>
-                {/* PROJECT-WISE VIEW */}
-                <div id="project-view" className="scroll-mt-4">
-                  <h2 className="text-3xl font-black uppercase mb-4 flex items-center gap-3">
-                    <div className="bg-[#ff6b9d] border-3 border-black p-2">
-                      <Trophy size={24} strokeWidth={3} />
-                    </div>
-                    Project-Wise Rankings
-                  </h2>
+                {/* Filters Section */}
+                <div className="bg-white border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                  <h3 className="text-xl font-black uppercase mb-4">Filter Results</h3>
                   
-                  {(() => {
-                    const projectScores = new Map()
-                    
-                    scores.forEach((score: any) => {
-                      if (!projectScores.has(score.project_id)) {
-                        projectScores.set(score.project_id, {
-                          projectId: score.project_id,
-                          scores: [],
-                          totalScore: 0,
-                          judgeCount: 0,
-                          avgScore: 0,
-                          avgInnovation: 0,
-                          avgPitching: 0,
-                          avgPresentation: 0,
-                          avgCreativity: 0,
-                          avgFunctionality: 0,
-                          avgScalability: 0
-                        })
-                      }
-                      
-                      const ps = projectScores.get(score.project_id)
-                      ps.scores.push(score)
-                      ps.totalScore += score.total_score
-                      ps.judgeCount += 1
-                      ps.avgScore = ps.totalScore / ps.judgeCount
-                      ps.avgInnovation = (ps.avgInnovation * (ps.judgeCount - 1) + score.innovation) / ps.judgeCount
-                      ps.avgPitching = (ps.avgPitching * (ps.judgeCount - 1) + score.pitching) / ps.judgeCount
-                      ps.avgPresentation = (ps.avgPresentation * (ps.judgeCount - 1) + score.presentation) / ps.judgeCount
-                      ps.avgCreativity = (ps.avgCreativity * (ps.judgeCount - 1) + score.creativity) / ps.judgeCount
-                      ps.avgFunctionality = (ps.avgFunctionality * (ps.judgeCount - 1) + score.functionality) / ps.judgeCount
-                      ps.avgScalability = (ps.avgScalability * (ps.judgeCount - 1) + score.scalability) / ps.judgeCount
-                    })
-                    
-                    const sortedProjects = Array.from(projectScores.values())
-                      .sort((a, b) => b.avgScore - a.avgScore)
-                    
-                    return sortedProjects.map((projectScore, index) => {
-                      const project = projects.find(p => p.id === projectScore.projectId)
-                      if (!project) return null
-                      
-                      return (
-                        <div key={projectScore.projectId} className="bg-white border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mb-6">
-                          <div className="flex flex-col lg:flex-row items-start gap-4 mb-6">
-                            {/* Rank Badge */}
-                            <div className={`${
-                              index === 0 ? 'bg-[#ffd93d]' :
-                              index === 1 ? 'bg-[#c0c0c0]' :
-                              index === 2 ? 'bg-[#cd7f32]' :
-                              'bg-[#3b82f6]'
-                            } border-4 border-black p-3 md:p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[70px] md:min-w-[80px] text-center`}>
-                              <p className="text-xs font-black uppercase">Rank</p>
-                              <p className="text-3xl md:text-4xl font-black">#{index + 1}</p>
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-xl md:text-2xl font-black uppercase mb-2 break-words">{project.title}</h3>
-                              <p className="text-sm font-bold mb-1">Team: {project.team_name}</p>
-                              <p className="text-xs md:text-sm mb-3 line-clamp-2">{project.description}</p>
-                              <span className="bg-[#c7f464] border-2 border-black px-3 py-1 text-xs font-black inline-block">
-                                {project.category}
-                              </span>
-                            </div>
-                            
-                            {/* Average Score */}
-                            <div className="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white border-4 border-black p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full lg:w-auto lg:min-w-[140px] text-center">
-                              <p className="text-xs md:text-sm font-black uppercase mb-1">Avg Score</p>
-                              <p className="text-4xl md:text-5xl font-black">{projectScore.avgScore.toFixed(1)}</p>
-                              <p className="text-xs font-bold mt-1">out of 60</p>
-                              <p className="text-xs font-bold mt-2">{projectScore.judgeCount} judges</p>
-                            </div>
-                          </div>
-                          
-                          {/* Average Criteria Scores */}
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
-                            {[
-                              { label: 'Innovation', value: projectScore.avgInnovation, color: 'bg-[#ff6b9d]' },
-                              { label: 'Pitching', value: projectScore.avgPitching, color: 'bg-[#3b82f6] text-white' },
-                              { label: 'Presentation', value: projectScore.avgPresentation, color: 'bg-[#ffd93d]' },
-                              { label: 'Creativity', value: projectScore.avgCreativity, color: 'bg-[#c7f464]' },
-                              { label: 'Functionality', value: projectScore.avgFunctionality, color: 'bg-[#a855f7] text-white' },
-                              { label: 'Scalability', value: projectScore.avgScalability, color: 'bg-[#06b6d4] text-white' },
-                            ].map(({ label, value, color }) => (
-                              <div key={label} className={`${color} border-2 border-black p-2 text-center`}>
-                                <p className="text-xs font-black uppercase mb-1">{label}</p>
-                                <p className="text-2xl font-black">{value.toFixed(1)}</p>
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* Individual Judge Scores */}
-                          <div className="border-t-3 border-black pt-4">
-                            <p className="text-sm font-black uppercase mb-3">Individual Judge Scores</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {projectScore.scores.map((score: any) => (
-                                <div key={score.id} className="bg-[#fef6e4] border-2 border-black p-3">
-                                  <p className="font-black text-sm mb-2 truncate" title={score.judge_name}>{score.judge_name}</p>
-                                  <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <div className="truncate">
-                                      <span className="font-bold">Innov:</span>
-                                      <span className="ml-1 bg-[#ff6b9d] border border-black px-2 py-0.5 font-black">{score.innovation}</span>
-                                    </div>
-                                    <div className="truncate">
-                                      <span className="font-bold">Pitch:</span>
-                                      <span className="ml-1 bg-[#3b82f6] border border-black px-2 py-0.5 font-black text-white">{score.pitching}</span>
-                                    </div>
-                                    <div className="truncate">
-                                      <span className="font-bold">Pres:</span>
-                                      <span className="ml-1 bg-[#ffd93d] border border-black px-2 py-0.5 font-black">{score.presentation}</span>
-                                    </div>
-                                    <div className="truncate">
-                                      <span className="font-bold">Creat:</span>
-                                      <span className="ml-1 bg-[#c7f464] border border-black px-2 py-0.5 font-black">{score.creativity}</span>
-                                    </div>
-                                    <div className="truncate">
-                                      <span className="font-bold">Func:</span>
-                                      <span className="ml-1 bg-[#a855f7] border border-black px-2 py-0.5 font-black text-white">{score.functionality}</span>
-                                    </div>
-                                    <div className="truncate">
-                                      <span className="font-bold">Scale:</span>
-                                      <span className="ml-1 bg-[#06b6d4] border border-black px-2 py-0.5 font-black text-white">{score.scalability}</span>
-                                    </div>
-                                  </div>
-                                  <div className="mt-2 pt-2 border-t border-black">
-                                    <span className="font-black text-xs">Total:</span>
-                                    <span className="ml-2 bg-black text-white border border-black px-2 py-1 font-black text-xs">{score.total_score}/60</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })
-                  })()}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Category Filter */}
+                    <div>
+                      <label className="block text-sm font-black uppercase mb-3">Select Category</label>
+                      <div className="flex flex-wrap gap-2">
+                        {['All', ...Array.from(new Set(projects.map((p: any) => p.category)))].map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => setSelectedResultCategory(cat)}
+                            className={`px-4 py-2 font-black border-3 border-black uppercase text-sm transition-all ${
+                              selectedResultCategory === cat
+                                ? 'bg-[#c7f464] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
+                                : 'bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Judge Filter */}
+                    <div>
+                      <label className="block text-sm font-black uppercase mb-3">Select Judge</label>
+                      <div className="flex flex-wrap gap-2">
+                        {['All', ...Array.from(new Set(scores.map((s: any) => s.judge_name)))].map((judge) => (
+                          <button
+                            key={judge}
+                            onClick={() => setSelectedJudge(judge)}
+                            className={`px-4 py-2 font-black border-3 border-black uppercase text-sm transition-all ${
+                              selectedJudge === judge
+                                ? 'bg-[#3b82f6] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
+                                : 'bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                            }`}
+                          >
+                            {judge}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* CATEGORY-WISE VIEW */}
-                <div id="category-view" className="scroll-mt-4">
-                  <h2 className="text-3xl font-black uppercase mb-4 flex items-center gap-3">
-                    <div className="bg-[#c7f464] border-3 border-black p-2">
-                      <FolderOpen size={24} strokeWidth={3} />
-                    </div>
-                    Category-Wise Rankings
-                  </h2>
+                {/* Rankings Section */}
+                {(() => {
+                  // Calculate cumulative scores for all projects
+                  const projectScores = new Map()
                   
-                  {(() => {
-                    const categoryScores = new Map()
+                  scores.forEach((score: any) => {
+                    // Apply judge filter
+                    if (selectedJudge !== 'All' && score.judge_name !== selectedJudge) return
                     
-                    projects.forEach((project: any) => {
-                      const projectScoresData = scores.filter((s: any) => s.project_id === project.id)
-                      if (projectScoresData.length === 0) return
-                      
-                      if (!categoryScores.has(project.category)) {
-                        categoryScores.set(project.category, [])
-                      }
-                      
-                      const totalScore = projectScoresData.reduce((sum: number, s: any) => sum + s.total_score, 0)
-                      const avgScore = totalScore / projectScoresData.length
-                      
-                      categoryScores.get(project.category).push({
-                        project,
-                        avgScore,
-                        judgeCount: projectScoresData.length
+                    if (!projectScores.has(score.project_id)) {
+                      projectScores.set(score.project_id, {
+                        projectId: score.project_id,
+                        totalScore: 0,
+                        judgeCount: 0,
+                        scores: []
                       })
-                    })
+                    }
                     
-                    return Array.from(categoryScores.entries()).map(([category, projectsList]: [string, any[]]) => {
-                      const sortedProjects = projectsList.sort((a, b) => b.avgScore - a.avgScore)
+                    const ps = projectScores.get(score.project_id)
+                    ps.scores.push(score)
+                    ps.totalScore += score.total_score
+                    ps.judgeCount += 1
+                  })
+                  
+                  // Get filtered projects with scores
+                  let filteredProjectsWithScores = Array.from(projectScores.entries())
+                    .map(([projectId, data]: [string, any]) => {
+                      const project = projects.find((p: any) => p.id === projectId)
+                      if (!project) return null
                       
-                      return (
-                        <div key={category} className="bg-white border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mb-6">
-                          <h3 className="text-xl md:text-2xl font-black uppercase mb-4 bg-[#c7f464] border-3 border-black p-3 inline-block">
-                            {category}
-                          </h3>
-                          
-                          <div className="space-y-3">
-                            {sortedProjects.map((item, index) => (
-                              <div key={item.project.id} className="bg-[#fef6e4] border-2 border-black p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      // Apply category filter
+                      if (selectedResultCategory !== 'All' && project.category !== selectedResultCategory) return null
+                      
+                      return {
+                        project,
+                        ...data,
+                        cumulativeScore: data.totalScore
+                      }
+                    })
+                    .filter(Boolean)
+                    .sort((a: any, b: any) => b.cumulativeScore - a.cumulativeScore)
+                  
+                  return (
+                    <div className="bg-gradient-to-br from-[#fef6e4] to-[#fff9e5] border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl md:text-3xl font-black uppercase">
+                          🏆 Rankings
+                          {selectedResultCategory !== 'All' && (
+                            <span className="ml-3 text-lg bg-[#c7f464] border-3 border-black px-3 py-1">
+                              {selectedResultCategory}
+                            </span>
+                          )}
+                          {selectedJudge !== 'All' && (
+                            <span className="ml-3 text-lg bg-[#3b82f6] text-white border-3 border-black px-3 py-1">
+                              {selectedJudge}
+                            </span>
+                          )}
+                        </h2>
+                        <div className="bg-white border-3 border-black px-4 py-2">
+                          <p className="text-xs font-black uppercase">Total Projects</p>
+                          <p className="text-2xl font-black text-center">{filteredProjectsWithScores.length}</p>
+                        </div>
+                      </div>
+
+                      {filteredProjectsWithScores.length === 0 ? (
+                        <div className="text-center py-10">
+                          <p className="text-xl font-black text-gray-400 uppercase">No projects found with selected filters</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {filteredProjectsWithScores.map((item: any, index: number) => (
+                            <div 
+                              key={item.project.id}
+                              className="bg-white border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all"
+                            >
+                              <div className="flex flex-col lg:flex-row items-start gap-4">
+                                {/* Rank Badge */}
                                 <div className={`${
                                   index === 0 ? 'bg-[#ffd93d]' :
                                   index === 1 ? 'bg-[#c0c0c0]' :
                                   index === 2 ? 'bg-[#cd7f32]' :
-                                  'bg-gray-200'
-                                } border-2 border-black px-3 py-2 font-black text-lg min-w-[60px] text-center`}>
-                                  #{index + 1}
+                                  'bg-[#3b82f6]'
+                                } border-4 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[80px] text-center flex-shrink-0`}>
+                                  {index < 3 && <p className="text-2xl mb-1">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</p>}
+                                  <p className="text-xs font-black uppercase">Rank</p>
+                                  <p className="text-4xl font-black">#{index + 1}</p>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-black text-base md:text-lg break-words">{item.project.title}</h4>
-                                  <p className="text-xs md:text-sm font-bold text-gray-600">{item.project.team_name}</p>
-                                </div>
-                                <div className="bg-[#a855f7] text-white border-2 border-black px-4 py-2 font-black text-center min-w-[100px]">
-                                  <p className="text-2xl">{item.avgScore.toFixed(1)}</p>
-                                  <p className="text-xs">/{item.judgeCount}J</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })
-                  })()}
-                </div>
 
-                {/* JUDGE-WISE VIEW */}
-                <div id="judge-view" className="scroll-mt-4">
-                  <h2 className="text-3xl font-black uppercase mb-4 flex items-center gap-3">
-                    <div className="bg-[#3b82f6] border-3 border-black p-2">
-                      <Users size={24} strokeWidth={3} className="text-white" />
-                    </div>
-                    Judge-Wise Scores
-                  </h2>
-                  
-                  {(() => {
-                    const judgeScores = new Map()
-                    
-                    scores.forEach((score: any) => {
-                      if (!judgeScores.has(score.judge_id)) {
-                        judgeScores.set(score.judge_id, {
-                          judgeName: score.judge_name,
-                          scores: [],
-                          totalProjects: 0,
-                          avgGiven: 0
-                        })
-                      }
-                      
-                      const js = judgeScores.get(score.judge_id)
-                      js.scores.push(score)
-                      js.totalProjects += 1
-                      js.avgGiven = js.scores.reduce((sum: number, s: any) => sum + s.total_score, 0) / js.totalProjects
-                    })
-                    
-                    return Array.from(judgeScores.entries()).map(([judgeId, judgeData]: [string, any]) => (
-                      <div key={judgeId} className="bg-white border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mb-6">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                          <h3 className="text-xl md:text-2xl font-black uppercase">{judgeData.judgeName}</h3>
-                          <div className="bg-[#3b82f6] text-white border-3 border-black px-4 md:px-6 py-3 font-black text-center">
-                            <p className="text-xs uppercase">Avg Score Given</p>
-                            <p className="text-3xl">{judgeData.avgGiven.toFixed(1)}</p>
-                            <p className="text-xs">{judgeData.totalProjects} projects</p>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {judgeData.scores.map((score: any) => {
-                            const project = projects.find((p: any) => p.id === score.project_id)
-                            if (!project) return null
-                            
-                            return (
-                              <div key={score.id} className="bg-[#fef6e4] border-2 border-black p-3">
-                                <h4 className="font-black text-sm mb-2 truncate" title={project.title}>{project.title}</h4>
-                                <div className="grid grid-cols-3 gap-2 text-xs mb-2">
-                                  <div>
-                                    <p className="font-bold">Innov</p>
-                                    <p className="bg-[#ff6b9d] border border-black px-2 py-1 font-black text-center">{score.innovation}</p>
+                                {/* Project Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                                    <div className="flex-1 min-w-0">
+                                      <h3 className="text-xl md:text-2xl font-black uppercase mb-2 break-words">{item.project.title}</h3>
+                                      <p className="text-sm font-bold mb-1">Team: {item.project.team_name}</p>
+                                      <span className="bg-[#c7f464] border-2 border-black px-3 py-1 text-xs font-black inline-block">
+                                        {item.project.category}
+                                      </span>
+                                    </div>
+
+                                    {/* Cumulative Score */}
+                                    <div className="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white border-4 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[140px] text-center flex-shrink-0">
+                                      <p className="text-xs font-black uppercase mb-1">Cumulative Score</p>
+                                      <p className="text-5xl font-black">{item.cumulativeScore}</p>
+                                      <p className="text-xs font-bold mt-1">from {item.judgeCount} judge{item.judgeCount !== 1 ? 's' : ''}</p>
+                                      <div className="mt-2 pt-2 border-t-2 border-white/30">
+                                        <p className="text-xs font-bold">Avg: {(item.cumulativeScore / item.judgeCount).toFixed(1)}/60</p>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="font-bold">Pitch</p>
-                                    <p className="bg-[#3b82f6] text-white border border-black px-2 py-1 font-black text-center">{score.pitching}</p>
+
+                                  {/* Judge Breakdown */}
+                                  <div className="border-t-3 border-black pt-4">
+                                    <p className="text-sm font-black uppercase mb-3">Judge Scores</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                      {item.scores.map((score: any) => (
+                                        <div key={score.id} className="bg-[#fef6e4] border-2 border-black p-3">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <p className="font-black text-sm truncate flex-1" title={score.judge_name}>{score.judge_name}</p>
+                                            <span className="bg-black text-white border border-black px-2 py-1 font-black text-xs ml-2">
+                                              {score.total_score}/60
+                                            </span>
+                                          </div>
+                                          <div className="grid grid-cols-3 gap-1 text-xs">
+                                            <div className="text-center">
+                                              <p className="bg-[#ff6b9d] border border-black px-1 py-1 font-black">{score.innovation}</p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="bg-[#3b82f6] text-white border border-black px-1 py-1 font-black">{score.pitching}</p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="bg-[#ffd93d] border border-black px-1 py-1 font-black">{score.presentation}</p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="bg-[#c7f464] border border-black px-1 py-1 font-black">{score.creativity}</p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="bg-[#a855f7] text-white border border-black px-1 py-1 font-black">{score.functionality}</p>
+                                            </div>
+                                            <div className="text-center">
+                                              <p className="bg-[#06b6d4] text-white border border-black px-1 py-1 font-black">{score.scalability}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="font-bold">Pres</p>
-                                    <p className="bg-[#ffd93d] border border-black px-2 py-1 font-black text-center">{score.presentation}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-bold">Creat</p>
-                                    <p className="bg-[#c7f464] border border-black px-2 py-1 font-black text-center">{score.creativity}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-bold">Func</p>
-                                    <p className="bg-[#a855f7] text-white border border-black px-2 py-1 font-black text-center">{score.functionality}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-bold">Scale</p>
-                                    <p className="bg-[#06b6d4] text-white border border-black px-2 py-1 font-black text-center">{score.scalability}</p>
-                                  </div>
-                                </div>
-                                <div className="border-t border-black pt-2">
-                                  <span className="font-black text-xs">Total:</span>
-                                  <span className="ml-2 bg-black text-white border border-black px-3 py-1 font-black text-sm">{score.total_score}/60</span>
                                 </div>
                               </div>
-                            )
-                          })}
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))
-                  })()}
-                </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </>
             )}
           </div>
