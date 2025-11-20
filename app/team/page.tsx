@@ -15,6 +15,13 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true)
   const [editMode, setEditMode] = useState(false)
   const [editProject, setEditProject] = useState<any>(null)
+  const [editingMembers, setEditingMembers] = useState(false)
+  const [members, setMembers] = useState<any[]>([])
+  const [newMemberName, setNewMemberName] = useState('')
+  const [newMemberEmail, setNewMemberEmail] = useState('')
+  const [updateError, setUpdateError] = useState('')
+  const [updateSuccess, setUpdateSuccess] = useState('')
+  const [isTeamLeader, setIsTeamLeader] = useState(false)
 
   useEffect(() => {
     fetchTeamData()
@@ -30,15 +37,14 @@ export default function TeamPage() {
       
       const user = await userRes.json()
       
-      // Get team information if user is a team leader
-      if (user.is_team_leader) {
-        // Fetch team details and projects
-        const teamRes = await fetch(`/api/teams/my-team`)
-        if (teamRes.ok) {
-          const team = await teamRes.json()
-          setTeamData(team)
-          setProjects(team.projects || [])
-        }
+      // Fetch team details - now works for both team leaders and members
+      const teamRes = await fetch(`/api/teams/my-team`)
+      if (teamRes.ok) {
+        const team = await teamRes.json()
+        setTeamData(team)
+        setProjects(team.projects || [])
+        setMembers(team.members || [])
+        setIsTeamLeader(team.isTeamLeader || false)
       }
     } catch (error) {
       console.error('Error fetching team data:', error)
@@ -79,6 +85,59 @@ export default function TeamPage() {
     } catch (error) {
       console.error('Error deleting project:', error)
     }
+  }
+
+  const handleUpdateMembers = async () => {
+    setUpdateError('')
+    setUpdateSuccess('')
+    
+    try {
+      const res = await fetch('/api/teams/my-team', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ members })
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok) {
+        setEditingMembers(false)
+        setUpdateSuccess('Team members updated successfully!')
+        fetchTeamData()
+        setTimeout(() => setUpdateSuccess(''), 3000)
+      } else {
+        setUpdateError(data.error || 'Failed to update team members')
+      }
+    } catch (error) {
+      console.error('Error updating members:', error)
+      setUpdateError('An error occurred while updating members')
+    }
+  }
+
+  const handleAddMember = () => {
+    if (newMemberName && newMemberEmail) {
+      // Basic email validation
+      const emailPattern = /@bennett\.edu\.in$|@bennettu\.onmicrosoft\.com$/
+      if (!emailPattern.test(newMemberEmail)) {
+        setUpdateError('Email must be from @bennett.edu.in or @bennettu.onmicrosoft.com domain')
+        return
+      }
+      
+      setMembers([...members, { name: newMemberName, email: newMemberEmail }])
+      setNewMemberName('')
+      setNewMemberEmail('')
+      setUpdateError('')
+    }
+  }
+
+  const handleRemoveMember = (index: number) => {
+    setMembers(members.filter((_, i) => i !== index))
+  }
+
+  const handleEditMember = (index: number, field: string, value: string) => {
+    const updatedMembers = [...members]
+    updatedMembers[index] = { ...updatedMembers[index], [field]: value }
+    setMembers(updatedMembers)
   }
 
   return (
@@ -123,46 +182,168 @@ export default function TeamPage() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Info Banner for Team Members */}
+            {!isTeamLeader && (
+              <div className="bg-[#3b82f6] border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <p className="font-black text-white text-lg">
+                  ℹ️ You are viewing your team's information. Only the team leader can edit team details and projects.
+                </p>
+              </div>
+            )}
+
             {/* Team Info Card */}
             <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-3xl font-black uppercase mb-2">{teamData.name}</h2>
-                  <div className="flex items-center gap-3 p-3 bg-[#c7f464] border-3 border-black inline-block">
-                    <Code2 size={20} strokeWidth={3} />
-                    <span className="font-black">CODE: {teamData.code}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-[#c7f464] border-3 border-black inline-flex items-center gap-2">
+                      <Code2 size={20} strokeWidth={3} />
+                      <span className="font-black">CODE: {teamData.code}</span>
+                    </div>
+                    <div className={`p-3 border-3 border-black inline-flex items-center gap-2 ${
+                      isTeamLeader ? 'bg-[#ff6b9d]' : 'bg-[#3b82f6]'
+                    }`}>
+                      <span className="font-black text-white">
+                        {isTeamLeader ? '👑 TEAM LEADER' : '👤 TEAM MEMBER'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
               
               {/* Team Members */}
               <div className="mt-6">
-                <h3 className="text-xl font-black mb-3 uppercase border-b-3 border-black pb-2">
-                  Team Members ({teamData.members?.length || 0})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {teamData.members?.map((member: any, index: number) => (
-                    <div key={index} className="p-3 bg-[#fef6e4] border-2 border-black font-bold">
-                      👤 {member.name} ({member.email})
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-3 border-b-3 border-black pb-2">
+                  <h3 className="text-xl font-black uppercase">
+                    Team Members ({members.length})
+                  </h3>
+                  {isTeamLeader && (
+                    <Button
+                      onClick={() => {
+                        if (editingMembers) {
+                          setMembers(teamData.members || [])
+                          setUpdateError('')
+                          setUpdateSuccess('')
+                        }
+                        setEditingMembers(!editingMembers)
+                      }}
+                      size="sm"
+                      variant={editingMembers ? "outline" : "default"}
+                      className="font-black"
+                    >
+                      {editingMembers ? 'CANCEL' : 'EDIT MEMBERS'}
+                    </Button>
+                  )}
                 </div>
+
+                {/* Success Message */}
+                {updateSuccess && (
+                  <div className="mb-4 p-4 bg-[#c7f464] border-3 border-black text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    ✅ {updateSuccess}
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {updateError && (
+                  <div className="mb-4 p-4 bg-[#ff6b9d] border-3 border-black text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    ⚠️ {updateError}
+                  </div>
+                )}
+
+                {editingMembers ? (
+                  <div className="space-y-4">
+                    {/* Existing Members - Editable */}
+                    {members.map((member: any, index: number) => (
+                      <div key={index} className="flex gap-2 items-start">
+                        <Input
+                          value={member.name}
+                          onChange={(e) => handleEditMember(index, 'name', e.target.value)}
+                          placeholder="Member Name"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={member.email}
+                          onChange={(e) => handleEditMember(index, 'email', e.target.value)}
+                          placeholder="Member Email"
+                          className="flex-1"
+                        />
+                        <button
+                          onClick={() => handleRemoveMember(index)}
+                          className="p-3 border-3 border-black bg-[#ff6b9d] hover:bg-red-500 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all"
+                        >
+                          <Trash2 size={18} strokeWidth={3} />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Add New Member */}
+                    <div className="border-3 border-black p-4 bg-[#c7f464]/30">
+                      <h4 className="font-black mb-3 uppercase text-sm">Add New Member</h4>
+                      <div className="flex gap-2">
+                        <Input
+                          value={newMemberName}
+                          onChange={(e) => setNewMemberName(e.target.value)}
+                          placeholder="Name"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={newMemberEmail}
+                          onChange={(e) => setNewMemberEmail(e.target.value)}
+                          placeholder="Email"
+                          type="email"
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={handleAddMember}
+                          size="sm"
+                          className="font-black"
+                        >
+                          ADD
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <Button
+                      onClick={handleUpdateMembers}
+                      size="lg"
+                      className="w-full font-black"
+                    >
+                      SAVE CHANGES
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {members.map((member: any, index: number) => (
+                      <div key={index} className="p-3 bg-[#fef6e4] border-2 border-black font-bold">
+                        👤 {member.name} ({member.email})
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Projects Section */}
             <div className="bg-[#3b82f6] border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
               <h2 className="text-3xl font-black text-white uppercase mb-2">Team Projects</h2>
-              <p className="font-bold text-white">Manage and edit your project submissions</p>
+              <p className="font-bold text-white">
+                {isTeamLeader ? 'Manage and edit your project submissions' : 'View your team\'s project submissions'}
+              </p>
             </div>
 
             {projects.length === 0 ? (
               <div className="bg-white border-4 border-black p-10 text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                 <p className="text-xl font-black mb-2">NO PROJECTS YET!</p>
-                <p className="font-bold text-gray-700 mb-4">Upload your first project to get started.</p>
-                <Button onClick={() => router.push('/upload')} size="lg">
-                  UPLOAD PROJECT
-                </Button>
+                <p className="font-bold text-gray-700 mb-4">
+                  {isTeamLeader ? 'Upload your first project to get started.' : 'Your team hasn\'t uploaded any projects yet.'}
+                </p>
+                {isTeamLeader && (
+                  <Button onClick={() => router.push('/upload')} size="lg">
+                    UPLOAD PROJECT
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -200,20 +381,22 @@ export default function TeamPage() {
                               {project.category}
                             </span>
                           </div>
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => { setEditMode(true); setEditProject(project) }}
-                              className="p-2 border-3 border-black bg-white hover:bg-[#fef6e4] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all"
-                            >
-                              <Edit size={18} strokeWidth={3} />
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteProject(project.id)}
-                              className="p-2 border-3 border-black bg-[#ff6b9d] hover:bg-red-500 text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all"
-                            >
-                              <Trash2 size={18} strokeWidth={3} />
-                            </button>
-                          </div>
+                          {isTeamLeader && (
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => { setEditMode(true); setEditProject(project) }}
+                                className="p-2 border-3 border-black bg-white hover:bg-[#fef6e4] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all"
+                              >
+                                <Edit size={18} strokeWidth={3} />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteProject(project.id)}
+                                className="p-2 border-3 border-black bg-[#ff6b9d] hover:bg-red-500 text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all"
+                              >
+                                <Trash2 size={18} strokeWidth={3} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <p className="font-bold text-gray-700 mb-4">{project.description}</p>
                         <div className="flex items-center gap-4 text-sm font-bold">
