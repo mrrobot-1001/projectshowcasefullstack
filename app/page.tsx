@@ -3,7 +3,7 @@
 import { Navbar } from '@/components/navbar'
 import { ProjectCard } from '@/components/project-card'
 import { FilterPills } from '@/components/filter-pills'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 
 export default function Home() {
   const [projects, setProjects] = useState<any[]>([])
@@ -14,12 +14,13 @@ export default function Home() {
     fetchProjects()
   }, [])
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
-      const response = await fetch('/api/projects')
+      const response = await fetch('/api/projects', {
+        next: { revalidate: 10 }
+      })
       if (response.ok) {
         const data = await response.json()
-        // Ensure data is an array
         setProjects(Array.isArray(data) ? data : [])
       } else {
         setProjects([])
@@ -30,11 +31,18 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const filteredProjects = selectedCategory === 'All' 
-    ? projects 
-    : projects.filter((p: any) => p.category === selectedCategory)
+  const filteredProjects = useMemo(() => 
+    selectedCategory === 'All' 
+      ? projects 
+      : projects.filter((p: any) => p.category === selectedCategory),
+    [selectedCategory, projects]
+  )
+
+  const handleCategoryChange = useCallback((category: string) => {
+    setSelectedCategory(category)
+  }, [])
 
   return (
     <div className="min-h-screen bg-white">
@@ -99,7 +107,7 @@ export default function Home() {
           <div className="container mx-auto max-w-7xl">
             <div className="mb-10 md:mb-12">
               {/* Filter Pills */}
-              <FilterPills onSelectCategory={setSelectedCategory} selectedCategory={selectedCategory} />
+              <FilterPills onSelectCategory={handleCategoryChange} selectedCategory={selectedCategory} />
             </div>
 
             {loading ? (

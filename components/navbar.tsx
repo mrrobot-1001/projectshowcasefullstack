@@ -3,39 +3,20 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, User, LogOut } from 'lucide-react'
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { useRouter, usePathname } from 'next/navigation'
+import { useUser } from '@/contexts/UserContext'
 
 export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+  const { user, loading, setUser } = useUser()
   const [isOpen, setIsOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
-    try {
-      const response = await fetch('/api/auth/user')
-      if (response.ok) {
-        const data = await response.json()
-        setUser(data)
-      } else {
-        setUser(null)
-      }
-    } catch (error) {
-      // User not logged in
-      setUser(null)
-    } finally {
-      setLoading(false)
-    }
-  }
+  console.log('Navbar - User:', user, 'Loading:', loading)
 
   const navigate = (path: string) => {
     startTransition(() => {

@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useUser } from '@/contexts/UserContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { refreshUser } = useUser()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -31,12 +33,16 @@ export default function LoginPage() {
         throw new Error(data.error || 'Login failed')
       }
 
+      // Refresh user context
+      await refreshUser()
+
       // Redirect based on role
       if (data.isAdmin) {
         router.push('/admin')
       } else {
         router.push('/')
       }
+      router.refresh()
     } catch (err: any) {
       setError(err.message || 'An error occurred during login')
     } finally {

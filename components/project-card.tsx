@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { Heart } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 
 interface ProjectCardProps {
   id: string
@@ -38,7 +38,7 @@ const trackColors = [
   'bg-[#ef4444]',
 ]
 
-export function ProjectCard({
+export const ProjectCard = memo(function ProjectCard({
   id,
   title,
   description,
@@ -65,7 +65,9 @@ export function ProjectCard({
 
   const checkLikeStatus = async () => {
     try {
-      const response = await fetch(`/api/likes?project_id=${id}`)
+      const response = await fetch(`/api/likes?project_id=${id}`, {
+        next: { revalidate: 5 }
+      })
       if (response.ok) {
         const data = await response.json()
         setIsLiked(data.liked)
@@ -168,4 +170,4 @@ export function ProjectCard({
       </div>
     </div>
   )
-}
+})
