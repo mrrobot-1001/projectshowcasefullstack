@@ -3,12 +3,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, User, LogOut } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 export function Navbar() {
   const router = useRouter()
+  const pathname = usePathname()
+  const [isPending, startTransition] = useTransition()
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -35,11 +37,17 @@ export function Navbar() {
     }
   }
 
+  const navigate = (path: string) => {
+    startTransition(() => {
+      router.push(path)
+    })
+  }
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
       setUser(null)
-      router.push('/')
+      navigate('/')
       router.refresh()
     } catch (error) {
       console.error('Logout failed:', error)
@@ -52,7 +60,10 @@ export function Navbar() {
         <div className="container mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 font-black text-lg hover:translate-x-[2px] hover:translate-y-[2px] transition-transform">
+            <button 
+              onClick={() => navigate('/')} 
+              className="flex items-center gap-2 font-black text-lg hover:translate-x-[2px] hover:translate-y-[2px] transition-transform"
+            >
               <Image 
                 src="/logo.jpg" 
                 alt="Logo" 
@@ -61,19 +72,19 @@ export function Navbar() {
                 className="h-12 md:h-14 w-auto object-contain"
                 priority
               />
-            </Link>
+            </button>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-3">
-              <Link href="/" className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <button onClick={() => navigate('/')} className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 HOME
-              </Link>
-              <Link href="/leaderboard" className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              </button>
+              <button onClick={() => navigate('/leaderboard')} className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 LEADERBOARD
-              </Link>
-              <Link href="/team" className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              </button>
+              <button onClick={() => navigate('/team')} className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 TEAMS
-              </Link>
+              </button>
             </div>
 
             {/* Desktop Actions */}
@@ -82,12 +93,12 @@ export function Navbar() {
                 <div className="w-24 h-9 bg-gray-200 border-3 border-black animate-pulse" />
               ) : user ? (
                 <>
-                  <Link 
-                    href="/upload"
+                  <button
+                    onClick={() => navigate('/upload')}
                     className="px-5 py-2 text-sm font-black border-3 border-black bg-[#3b82f6] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                   >
                     UPLOAD
-                  </Link>
+                  </button>
                   <div className="relative">
                     <button
                       onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -98,13 +109,15 @@ export function Navbar() {
                     </button>
                     {showProfileMenu && (
                       <div className="absolute right-0 mt-2 w-48 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                        <Link
-                          href="/profile"
-                          className="block px-4 py-3 text-sm font-bold border-b-3 border-black hover:bg-[#fef6e4] transition-colors"
-                          onClick={() => setShowProfileMenu(false)}
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false)
+                            navigate('/profile')
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm font-bold border-b-3 border-black hover:bg-[#fef6e4] transition-colors"
                         >
                           MY PROFILE
-                        </Link>
+                        </button>
                         <button
                           onClick={() => {
                             setShowProfileMenu(false)
@@ -121,18 +134,18 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/login"
+                  <button
+                    onClick={() => navigate('/login')}
                     className="px-5 py-2 text-sm font-bold border-3 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                   >
                     LOGIN
-                  </Link>
-                  <Link
-                    href="/signup"
+                  </button>
+                  <button
+                    onClick={() => navigate('/signup')}
                     className="px-5 py-2 text-sm font-black border-3 border-black bg-[#ff6b9d] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                   >
                     SIGN UP
-                  </Link>
+                  </button>
                 </>
               )}
             </div>
@@ -154,46 +167,56 @@ export function Navbar() {
           {/* Mobile Navigation */}
           {isOpen && (
             <div className="md:hidden mt-4 pt-4 border-t-4 border-black space-y-2 pb-4 animate-[slideDown_0.3s_ease-out]">
-              <Link 
-                href="/" 
-                className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.05s_both]"
-                onClick={() => setIsOpen(false)}
+              <button
+                onClick={() => {
+                  setIsOpen(false)
+                  navigate('/')
+                }}
+                className="block w-full text-left px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.05s_both]"
               >
                 HOME
-              </Link>
-              <Link 
-                href="/leaderboard" 
-                className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.1s_both]"
-                onClick={() => setIsOpen(false)}
+              </button>
+              <button
+                onClick={() => {
+                  setIsOpen(false)
+                  navigate('/leaderboard')
+                }}
+                className="block w-full text-left px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.1s_both]"
               >
                 LEADERBOARD
-              </Link>
-              <Link 
-                href="/team" 
-                className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.15s_both]"
-                onClick={() => setIsOpen(false)}
+              </button>
+              <button
+                onClick={() => {
+                  setIsOpen(false)
+                  navigate('/team')
+                }}
+                className="block w-full text-left px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.15s_both]"
               >
                 TEAMS
-              </Link>
+              </button>
               {loading ? (
                 <div className="w-full h-20 bg-gray-200 border-3 border-black animate-pulse mt-4" />
               ) : user ? (
                 <>
-                  <Link 
-                    href="/profile" 
-                    className="block px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.2s_both]"
-                    onClick={() => setIsOpen(false)}
+                  <button
+                    onClick={() => {
+                      setIsOpen(false)
+                      navigate('/profile')
+                    }}
+                    className="block w-full text-left px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.2s_both]"
                   >
                     PROFILE
-                  </Link>
+                  </button>
                   <div className="flex gap-2 pt-4 border-t-3 border-black animate-[fadeInUp_0.3s_ease-out_0.25s_both]">
-                    <Link
-                      href="/upload"
+                    <button
+                      onClick={() => {
+                        setIsOpen(false)
+                        navigate('/upload')
+                      }}
                       className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#3b82f6] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
-                      onClick={() => setIsOpen(false)}
                     >
                       UPLOAD
-                    </Link>
+                    </button>
                     <button
                       onClick={() => {
                         setIsOpen(false)
@@ -207,20 +230,24 @@ export function Navbar() {
                 </>
               ) : (
                 <div className="flex gap-2 pt-4 border-t-3 border-black animate-[fadeInUp_0.3s_ease-out_0.2s_both]">
-                  <Link
-                    href="/login"
+                  <button
+                    onClick={() => {
+                      setIsOpen(false)
+                      navigate('/login')
+                    }}
                     className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
-                    onClick={() => setIsOpen(false)}
                   >
                     LOGIN
-                  </Link>
-                  <Link
-                    href="/signup"
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false)
+                      navigate('/signup')
+                    }}
                     className="flex-1 text-center px-3 py-2 text-sm font-bold border-3 border-black bg-[#ff6b9d] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
-                    onClick={() => setIsOpen(false)}
                   >
                     SIGN UP
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>

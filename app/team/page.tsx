@@ -146,21 +146,57 @@ export default function TeamPage() {
       <Navbar />
 
       <main className="w-full">
-        {/* Header with Gradients */}
-        <section className="relative overflow-hidden px-4 py-12 md:py-16 border-b-4 border-black bg-gradient-to-r from-[#ff6b9d] via-[#ff4081] to-[#f50057]">
-          {/* Decorative Elements */}
-          <div className="absolute top-6 right-12 w-20 h-20 bg-[#c7f464] border-4 border-black rotate-45 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
-          <div className="absolute bottom-8 left-16 w-16 h-16 bg-[#3b82f6] border-4 border-black -rotate-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
-          <div className="absolute top-1/2 right-1/3 w-12 h-12 bg-[#ffd93d] border-4 border-black rotate-12"></div>
+        {/* Refined Neo-Brutalist Header - Purple/Indigo Theme */}
+        <section className="relative overflow-hidden px-4 py-20 md:py-28 lg:py-36 border-b-4 border-black bg-gradient-to-br from-purple-900 via-indigo-900 to-violet-900">
+          {/* Subtle Grid Pattern */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }}></div>
+          
+          {/* Floating Geometric Shapes */}
+          <div className="absolute top-16 right-24 w-20 h-20 bg-white/5 border-2 border-white/10 rotate-12 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(255,255,255,0.05)]"></div>
+          <div className="absolute top-32 right-48 w-12 h-12 bg-purple-500/10 border-2 border-purple-400/20 -rotate-6 backdrop-blur-sm"></div>
+          <div className="absolute bottom-20 left-24 w-16 h-16 bg-white/5 border-2 border-white/10 rotate-45 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(255,255,255,0.05)]"></div>
+          <div className="absolute bottom-40 left-56 w-10 h-10 bg-indigo-500/10 border-2 border-indigo-400/20 -rotate-12 backdrop-blur-sm"></div>
+          
+          {/* Accent Line */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent"></div>
           
           <div className="container mx-auto max-w-6xl relative z-10">
-            <div className="flex items-center gap-4 mb-4">
-              <Users className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-lg" strokeWidth={3} />
-              <h1 className="text-4xl md:text-6xl font-black text-white uppercase drop-shadow-lg">Team Management</h1>
+            <div className="max-w-4xl">
+              {/* Users Icon Badge */}
+              <div className="inline-flex items-center gap-3 mb-6 px-4 py-2 bg-white/10 border-2 border-white/20 backdrop-blur-md shadow-[3px_3px_0px_0px_rgba(255,255,255,0.1)]">
+                <Users className="w-5 h-5 text-purple-400" strokeWidth={3} />
+                <span className="text-sm font-bold text-white/80 tracking-wider">COLLABORATION</span>
+              </div>
+              
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-white tracking-tight leading-[0.9]">
+                Team<br/>Management
+              </h1>
+              
+              <div className="max-w-2xl">
+                <p className="text-lg md:text-xl lg:text-2xl font-medium text-white/70 leading-relaxed mb-8">
+                  Manage your team and projects
+                </p>
+                
+                {/* Stats Bar */}
+                <div className="flex flex-wrap gap-6 text-white/60">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 border border-white/30"></div>
+                    <span className="text-sm font-bold">Collaborate</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-indigo-500 border border-white/30"></div>
+                    <span className="text-sm font-bold">Organize</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-violet-500 border border-white/30"></div>
+                    <span className="text-sm font-bold">Succeed</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-lg md:text-xl font-bold text-white/95 drop-shadow">
-                Manage your team and projects
-            </p>
           </div>
         </section>
 
