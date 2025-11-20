@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Shield, Users, FolderOpen, BarChart3, Edit, Trash2, X } from 'lucide-react'
+import { Shield, Users, FolderOpen, BarChart3, Edit, Trash2, X, Heart, Plus, Minus, RotateCcw } from 'lucide-react'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -148,6 +148,33 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error updating project:', error)
       alert('Error updating project')
+    }
+  }
+
+  const manipulateLikes = async (projectId: string, action: 'increase' | 'decrease' | 'reset') => {
+    // Show confirmation for reset action
+    if (action === 'reset' && !confirm('Are you sure you want to reset likes to the original count?')) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}/likes`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        alert(`Likes ${action}d successfully! New count: ${data.likes_count}`)
+        fetchData()
+      } else {
+        const error = await res.json()
+        alert(`Failed to ${action} likes: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error(`Error ${action}ing likes:`, error)
+      alert(`Error ${action}ing likes`)
     }
   }
 
@@ -400,32 +427,77 @@ export default function AdminPage() {
                         <h3 className="text-2xl font-black uppercase mb-2">{project.title}</h3>
                         <p className="text-sm font-bold mb-1">Team: {project.team_name}</p>
                         <p className="text-sm mb-3">{project.description}</p>
-                        <div className="flex gap-4 text-sm">
+                        <div className="flex gap-4 text-sm flex-wrap">
                           <span className="bg-[#c7f464] border-2 border-black px-3 py-1 font-black">
                             {project.category}
                           </span>
                           <span className="bg-[#ff6b9d] text-white border-2 border-black px-3 py-1 font-black">
                             ❤️ {project.likes_count}
                           </span>
+                          {project.original_likes_count !== null && project.original_likes_count !== undefined && (
+                            <span className="bg-[#3b82f6] text-white border-2 border-black px-3 py-1 font-black">
+                              ORIGINAL: {project.original_likes_count}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div className="flex gap-2 ml-4">
-                        <Button 
-                          onClick={() => setEditingProject(project)} 
-                          variant="outline" 
-                          size="sm"
-                        >
-                          <Edit size={16} strokeWidth={3} className="mr-1" />
-                          EDIT
-                        </Button>
-                        <Button 
-                          onClick={() => deleteProject(project.id)} 
-                          variant="destructive" 
-                          size="sm"
-                        >
-                          <Trash2 size={16} strokeWidth={3} className="mr-1" />
-                          DELETE
-                        </Button>
+                      <div className="flex flex-col gap-2 ml-4">
+                        {/* Like Manipulation Controls */}
+                        <div className="bg-[#fef6e4] border-3 border-black p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[200px]">
+                          <p className="text-xs font-black uppercase mb-3 flex items-center gap-1">
+                            <Heart size={14} strokeWidth={3} className="fill-[#ff6b9d]" />
+                            Manipulate Likes
+                          </p>
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              onClick={() => manipulateLikes(project.id, 'increase')}
+                              size="sm"
+                              className="bg-[#c7f464] hover:bg-[#a8d92e] text-black border-2 border-black h-8 text-xs font-black justify-start"
+                              title="Increase likes by 1"
+                            >
+                              <Plus size={14} strokeWidth={3} className="mr-2" />
+                              INCREASE
+                            </Button>
+                            <Button
+                              onClick={() => manipulateLikes(project.id, 'decrease')}
+                              size="sm"
+                              className="bg-[#ffd93d] hover:bg-[#ffc107] text-black border-2 border-black h-8 text-xs font-black justify-start"
+                              title="Decrease likes by 1"
+                            >
+                              <Minus size={14} strokeWidth={3} className="mr-2" />
+                              DECREASE
+                            </Button>
+                            <Button
+                              onClick={() => manipulateLikes(project.id, 'reset')}
+                              size="sm"
+                              className="bg-[#ff6b9d] hover:bg-[#f50057] text-white border-2 border-black h-8 text-xs font-black justify-start"
+                              title="Reset to original likes"
+                            >
+                              <RotateCcw size={14} strokeWidth={3} className="mr-2" />
+                              RESET
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Edit and Delete Controls */}
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => setEditingProject(project)} 
+                            variant="outline" 
+                            size="sm"
+                          >
+                            <Edit size={16} strokeWidth={3} className="mr-1" />
+                            EDIT
+                          </Button>
+                          <Button 
+                            onClick={() => deleteProject(project.id)} 
+                            variant="destructive" 
+                            size="sm"
+                          >
+                            <Trash2 size={16} strokeWidth={3} className="mr-1" />
+                            DELETE
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
