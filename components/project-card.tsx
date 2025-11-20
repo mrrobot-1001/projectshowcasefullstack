@@ -20,22 +20,22 @@ interface ProjectCardProps {
 
 const cardBackgrounds = [
   'bg-white',
-  'bg-[#ffe5f1]', // Light pink
-  'bg-[#e8f4ff]', // Light blue
-  'bg-[#f5ffe5]', // Light green/yellow
-  'bg-[#fff9e5]', // Light yellow
-  'bg-[#f0e5ff]', // Light purple
+  'bg-gray-50',
+  'bg-blue-50/30',
+  'bg-purple-50/30',
+  'bg-pink-50/30',
+  'bg-green-50/30',
 ]
 
 const trackColors = [
-  'bg-[#ff6b9d]',
+  'bg-black',
   'bg-[#3b82f6]',
-  'bg-[#c7f464]',
-  'bg-[#ffd93d]',
-  'bg-[#a855f7]',
-  'bg-[#22d3ee]',
+  'bg-[#8b5cf6]',
+  'bg-[#ec4899]',
+  'bg-[#f59e0b]',
   'bg-[#10b981]',
-  'bg-[#f97316]',
+  'bg-[#06b6d4]',
+  'bg-[#ef4444]',
 ]
 
 export function ProjectCard({
@@ -129,13 +129,13 @@ export function ProjectCard({
       <div className="p-5">
         {/* Track Badge */}
         <div className="mb-3">
-          <span className={`inline-block px-3 py-1.5 text-xs font-black ${trackColor} text-white border-2 border-black uppercase tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}>
+          <span className={`inline-block px-3 py-1.5 text-xs font-black ${trackColor} text-white border-2 border-black tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}>
             {projectTrack}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="font-black text-lg md:text-xl mb-3 line-clamp-2 text-black uppercase">
+        <h3 className="font-black text-lg md:text-xl mb-3 line-clamp-2 text-black">
           {title}
         </h3>
 
@@ -163,7 +163,7 @@ export function ProjectCard({
                 : ''
             }`}
           />
-          <span>{isLiked ? '❤️ VOTED' : `🤍 VOTE`} ({likeCount})</span>
+          <span>{isLiked ? '❤️ Voted' : `🤍 Vote`} ({likeCount})</span>
         </button>
       </div>
     </div>
