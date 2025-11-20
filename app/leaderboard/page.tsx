@@ -18,27 +18,27 @@ const CATEGORIES = ['All', 'Web Development', 'Mobile App', 'AI/ML', 'Game Dev',
 function getRankBadge(rank: number) {
   if (rank === 1) {
     return (
-      <div className="flex items-center justify-center w-10 h-10 bg-yellow-400 border-4 border-black text-black font-black text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-yellow-400 border-3 sm:border-4 border-black text-black font-black text-base sm:text-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         1
       </div>
     )
   }
   if (rank === 2) {
     return (
-      <div className="flex items-center justify-center w-10 h-10 bg-gray-300 border-4 border-black text-black font-black text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gray-300 border-3 sm:border-4 border-black text-black font-black text-base sm:text-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         2
       </div>
     )
   }
   if (rank === 3) {
     return (
-      <div className="flex items-center justify-center w-10 h-10 bg-orange-400 border-4 border-black text-black font-black text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-orange-400 border-3 sm:border-4 border-black text-black font-black text-base sm:text-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         3
       </div>
     )
   }
   return (
-    <div className="flex items-center justify-center w-10 h-10 bg-white border-3 border-black text-black font-bold text-base">
+    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-white border-2 sm:border-3 border-black text-black font-bold text-sm sm:text-base">
       {rank}
     </div>
   )
@@ -82,37 +82,37 @@ export default function LeaderboardPage() {
 
       <main className="w-full">
         {/* Neo-Brutalist Header with Gradients */}
-        <section className="relative overflow-hidden px-4 py-12 md:py-16 border-b-4 border-black bg-gradient-to-br from-[#ff6b9d] via-[#ff4081] to-[#f50057]">
-          {/* Decorative Elements */}
-          <div className="absolute top-6 right-12 w-20 h-20 bg-[#c7f464] border-4 border-black rotate-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
-          <div className="absolute bottom-8 left-16 w-16 h-16 bg-[#3b82f6] border-4 border-black -rotate-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
-          <div className="absolute top-1/2 right-1/4 w-12 h-12 bg-[#ffd93d] border-4 border-black rotate-45"></div>
+        <section className="relative overflow-hidden px-4 sm:px-6 py-8 sm:py-12 md:py-16 border-b-4 border-black bg-gradient-to-br from-[#ff6b9d] via-[#ff4081] to-[#f50057]">
+          {/* Decorative Elements - responsive sizing */}
+          <div className="absolute top-4 sm:top-6 right-6 sm:right-12 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-[#c7f464] border-3 sm:border-4 border-black rotate-12 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
+          <div className="absolute bottom-4 sm:bottom-8 left-6 sm:left-16 w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-[#3b82f6] border-3 sm:border-4 border-black -rotate-6 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
+          <div className="absolute top-1/2 right-1/4 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-[#ffd93d] border-3 sm:border-4 border-black rotate-45"></div>
           
           <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="flex items-center gap-4 mb-4">
-              <Trophy className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-lg" strokeWidth={3} />
-              <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight drop-shadow-lg">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+              <Trophy className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white drop-shadow-lg" strokeWidth={3} />
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tight drop-shadow-lg text-center sm:text-left">
                 Leaderboard
               </h1>
             </div>
-            <p className="text-lg md:text-xl font-bold text-white/95 drop-shadow">
+            <p className="text-base sm:text-lg md:text-xl font-bold text-white/95 drop-shadow text-center sm:text-left">
               🏆 Top projects ranked by community votes
             </p>
           </div>
         </section>
 
-        <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 max-w-7xl">
 
         {/* Category Filter Pills */}
-        <div className="mb-8 flex gap-3 overflow-x-auto pb-3">
+        <div className="mb-6 sm:mb-8 flex gap-2 sm:gap-3 overflow-x-auto pb-3 scrollbar-hide">
           {CATEGORIES.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-5 py-2.5 font-bold text-sm border-3 border-black whitespace-nowrap transition-all ${
+              className={`px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 font-bold text-xs sm:text-sm border-3 border-black whitespace-nowrap transition-all ${
                 selectedCategory === category
-                  ? 'bg-[#3b82f6] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
-                  : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                  ? 'bg-[#3b82f6] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
+                  : 'bg-white text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
               }`}
             >
               {category}
@@ -122,86 +122,96 @@ export default function LeaderboardPage() {
 
         {/* Leaderboard Content */}
         {loading ? (
-          <div className="bg-white border-4 border-black p-12 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <p className="text-xl font-bold text-black">Loading leaderboard...</p>
+          <div className="bg-white border-3 sm:border-4 border-black p-8 sm:p-12 text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <p className="text-lg sm:text-xl font-bold text-black">Loading leaderboard...</p>
           </div>
         ) : leaderboard.length === 0 ? (
-          <div className="bg-[#f97316] border-4 border-black p-12 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <Sparkles className="w-16 h-16 mx-auto mb-4 text-black" strokeWidth={3} />
-            <p className="text-2xl font-black text-black mb-2">No Projects Yet!</p>
-            <p className="text-lg font-bold text-black">Be the first to submit a project in this category.</p>
+          <div className="bg-[#f97316] border-3 sm:border-4 border-black p-8 sm:p-12 text-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <Sparkles className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-black" strokeWidth={3} />
+            <p className="text-xl sm:text-2xl font-black text-black mb-2">No Projects Yet!</p>
+            <p className="text-base sm:text-lg font-bold text-black">Be the first to submit a project in this category.</p>
           </div>
         ) : (
-          <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            {/* Table Header */}
-            <div className="hidden md:grid grid-cols-12 gap-4 p-4 md:p-6 bg-black text-white font-black text-sm md:text-base border-b-4 border-black">
-              <div className="col-span-2 md:col-span-1">RANK</div>
-              <div className="col-span-6 md:col-span-4">PROJECT</div>
-              <div className="md:col-span-3">TEAM</div>
-              <div className="hidden lg:block lg:col-span-2">CATEGORY</div>
-              <div className="col-span-4 md:col-span-2 text-right">VOTES</div>
+          <div className="bg-white border-3 sm:border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            {/* Table Header - Desktop Only */}
+            <div className="hidden lg:grid grid-cols-12 gap-4 p-4 md:p-6 bg-black text-white font-black text-sm md:text-base border-b-4 border-black">
+              <div className="col-span-1">RANK</div>
+              <div className="col-span-4">PROJECT</div>
+              <div className="col-span-3">TEAM</div>
+              <div className="col-span-2">CATEGORY</div>
+              <div className="col-span-2 text-right">VOTES</div>
             </div>
 
             {/* Table Body */}
-            <div className="divide-y-4 divide-black">
+            <div className="divide-y-3 sm:divide-y-4 divide-black">
               {leaderboard.map((item) => (
                 <div
                   key={item.id}
-                  className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 md:p-6 hover:bg-[#fef6e4] transition-colors ${
+                  className={`p-3 sm:p-4 md:p-6 hover:bg-[#fef6e4] transition-colors ${
                     item.rank <= 3 ? 'bg-yellow-50' : ''
                   }`}
                 >
-                  {/* Mobile condensed header (visible on small screens) */}
-                  <div className="flex items-center justify-between md:hidden w-full mb-2">
-                    <div className="flex items-center gap-3">
-                      {getRankBadge(item.rank)}
-                      <div>
-                        <p className="font-black text-base text-black leading-tight">
+                  {/* Mobile Layout (< lg) */}
+                  <div className="lg:hidden">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      {/* Rank Badge */}
+                      <div className="flex-shrink-0">
+                        {getRankBadge(item.rank)}
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-black text-base sm:text-lg text-black leading-tight mb-1">
                           {item.title}
-                        </p>
-                        <p className="text-sm font-bold text-gray-700">
+                        </h3>
+                        <p className="text-sm sm:text-base font-bold text-gray-700 mb-2">
                           {item.team_name}
                         </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-block px-2 sm:px-3 py-1 text-xs font-black bg-[#c7f464] text-black border-2 border-black">
+                            {item.category}
+                          </span>
+                          <div className="flex items-center gap-1.5 sm:gap-2 bg-[#ff6b9d] border-2 sm:border-3 border-black px-2 sm:px-3 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                            <span className="text-lg sm:text-xl">❤</span>
+                            <span className="font-black text-base sm:text-lg text-black">{item.likes_count}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 bg-[#ff6b9d] border-3 border-black px-3 py-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                      <span className="text-2xl">❤</span>
-                      <span className="font-black text-lg text-black">{item.likes_count}</span>
+                  </div>
+
+                  {/* Desktop Layout (lg+) */}
+                  <div className="hidden lg:grid grid-cols-12 gap-4 items-center">
+                    {/* Rank */}
+                    <div className="col-span-1">
+                      {getRankBadge(item.rank)}
                     </div>
-                  </div>
 
-                  {/* Rank */}
-                  <div className="col-span-2 md:col-span-1 flex items-center hidden md:flex">
-                    {getRankBadge(item.rank)}
-                  </div>
+                    {/* Project Title */}
+                    <div className="col-span-4">
+                      <p className="font-black text-lg text-black leading-tight">
+                        {item.title}
+                      </p>
+                    </div>
 
-                  {/* Project Title */}
-                  <div className="col-span-6 md:col-span-4 flex flex-col justify-center">
-                    <p className="font-black text-base md:text-lg mb-1 md:mb-0 text-black leading-tight">
-                      {item.title}
-                    </p>
-                    <p className="text-sm font-bold text-gray-700 md:hidden mt-1">
-                      {item.team_name}
-                    </p>
-                  </div>
+                    {/* Team Name */}
+                    <div className="col-span-3">
+                      <p className="font-bold text-black">{item.team_name}</p>
+                    </div>
 
-                  {/* Team Name (md+) */}
-                  <div className="hidden md:flex md:col-span-3 items-center">
-                    <p className="font-bold text-black">{item.team_name}</p>
-                  </div>
+                    {/* Category */}
+                    <div className="col-span-2">
+                      <span className="inline-block px-3 py-1.5 text-xs font-black bg-[#c7f464] text-black border-2 border-black">
+                        {item.category}
+                      </span>
+                    </div>
 
-                  {/* Category */}
-                  <div className="hidden lg:flex lg:col-span-2 items-center">
-                    <span className="inline-block px-3 py-1.5 text-xs font-black bg-[#c7f464] text-black border-2 border-black">
-                      {item.category}
-                    </span>
-                  </div>
-
-                  {/* Votes (md+) */}
-                  <div className="col-span-4 md:col-span-2 flex items-center justify-end hidden md:flex">
-                    <div className="flex items-center gap-2 bg-[#ff6b9d] border-3 border-black px-4 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                      <span className="text-2xl">❤</span>
-                      <span className="font-black text-lg text-black">{item.likes_count}</span>
+                    {/* Votes */}
+                    <div className="col-span-2 flex justify-end">
+                      <div className="flex items-center gap-2 bg-[#ff6b9d] border-3 border-black px-4 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                        <span className="text-2xl">❤</span>
+                        <span className="font-black text-lg text-black">{item.likes_count}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
