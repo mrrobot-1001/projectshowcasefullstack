@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
             </h1>
           </div>
           <p className="text-lg md:text-xl font-bold text-white/95 relative z-10 drop-shadow">
-            🏆 Top projects ranked by community votes
+            Top projects ranked by community votes
           </p>
         </div>
 
@@ -129,10 +129,10 @@ export default function LeaderboardPage() {
         ) : (
           <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 p-4 md:p-6 bg-black text-white font-black text-sm md:text-base border-b-4 border-black">
+            <div className="hidden md:grid grid-cols-12 gap-4 p-4 md:p-6 bg-black text-white font-black text-sm md:text-base border-b-4 border-black">
               <div className="col-span-2 md:col-span-1">RANK</div>
               <div className="col-span-6 md:col-span-4">PROJECT</div>
-              <div className="hidden md:block md:col-span-3">TEAM</div>
+              <div className="md:col-span-3">TEAM</div>
               <div className="hidden lg:block lg:col-span-2">CATEGORY</div>
               <div className="col-span-4 md:col-span-2 text-right">VOTES</div>
             </div>
@@ -142,18 +142,37 @@ export default function LeaderboardPage() {
               {leaderboard.map((item) => (
                 <div
                   key={item.id}
-                  className={`grid grid-cols-12 gap-4 p-4 md:p-6 hover:bg-[#fef6e4] transition-colors ${
+                  className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 md:p-6 hover:bg-[#fef6e4] transition-colors ${
                     item.rank <= 3 ? 'bg-yellow-50' : ''
                   }`}
                 >
+                  {/* Mobile condensed header (visible on small screens) */}
+                  <div className="flex items-center justify-between md:hidden w-full mb-2">
+                    <div className="flex items-center gap-3">
+                      {getRankBadge(item.rank)}
+                      <div>
+                        <p className="font-black text-base text-black leading-tight">
+                          {item.title}
+                        </p>
+                        <p className="text-sm font-bold text-gray-700">
+                          {item.team_name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-[#ff6b9d] border-3 border-black px-3 py-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                      <span className="text-2xl">❤</span>
+                      <span className="font-black text-lg text-black">{item.likes_count}</span>
+                    </div>
+                  </div>
+
                   {/* Rank */}
-                  <div className="col-span-2 md:col-span-1 flex items-center">
+                  <div className="col-span-2 md:col-span-1 flex items-center hidden md:flex">
                     {getRankBadge(item.rank)}
                   </div>
 
                   {/* Project Title */}
                   <div className="col-span-6 md:col-span-4 flex flex-col justify-center">
-                    <p className="font-black text-base md:text-lg text-black leading-tight">
+                    <p className="font-black text-base md:text-lg mb-1 md:mb-0 text-black leading-tight">
                       {item.title}
                     </p>
                     <p className="text-sm font-bold text-gray-700 md:hidden mt-1">
@@ -161,7 +180,7 @@ export default function LeaderboardPage() {
                     </p>
                   </div>
 
-                  {/* Team Name */}
+                  {/* Team Name (md+) */}
                   <div className="hidden md:flex md:col-span-3 items-center">
                     <p className="font-bold text-black">{item.team_name}</p>
                   </div>
@@ -173,10 +192,10 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
 
-                  {/* Votes */}
-                  <div className="col-span-4 md:col-span-2 flex items-center justify-end">
+                  {/* Votes (md+) */}
+                  <div className="col-span-4 md:col-span-2 flex items-center justify-end hidden md:flex">
                     <div className="flex items-center gap-2 bg-[#ff6b9d] border-3 border-black px-4 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                      <span className="text-2xl">❤️</span>
+                      <span className="text-2xl">❤</span>
                       <span className="font-black text-lg text-black">{item.likes_count}</span>
                     </div>
                   </div>
