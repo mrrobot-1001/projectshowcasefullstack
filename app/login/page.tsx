@@ -151,6 +151,18 @@ export default function LoginPage() {
               Create one
             </Link>
           </div>
+
+          {/* Guest/Judge Login */}
+          <div className="mt-6">
+            <Link href="/guest-login">
+              <Button
+                type="button"
+                className="w-full bg-[#a855f7] hover:bg-[#7c3aed] text-white font-black uppercase border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >
+                🎯 Judge Login
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
