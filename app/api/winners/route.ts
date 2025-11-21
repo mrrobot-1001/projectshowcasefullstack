@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       .select('id')
       .eq('category', category)
       .eq('position', position)
-      .single()
+      .maybeSingle()
 
     if (existing) {
       // Update existing winner
