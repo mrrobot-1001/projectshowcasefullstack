@@ -26,8 +26,14 @@ export default function SecretAdminPage() {
   const [selectedResultCategory, setSelectedResultCategory] = useState('All')
   const [selectedJudge, setSelectedJudge] = useState('All')
   
-  // Winner selection
-  const [selectedWinners, setSelectedWinners] = useState<{ [category: string]: string }>({})
+  // Winner selection - now supports 3 positions per category
+  const [selectedWinners, setSelectedWinners] = useState<{ 
+    [category: string]: { 
+      first?: string; 
+      second?: string; 
+      third?: string 
+    } 
+  }>({})
 
   const [editingTeam, setEditingTeam] = useState<any>(null)
   const [editingUser, setEditingUser] = useState<any>(null)
@@ -93,10 +99,15 @@ export default function SecretAdminPage() {
       setScores(Array.isArray(scoresData) ? scoresData : [])
       setWinners(winnersData.winners || [])
       
-      // Initialize selected winners from existing winners
-      const winnerMap: { [category: string]: string } = {}
+      // Initialize selected winners from existing winners - now supports 3 positions
+      const winnerMap: { [category: string]: { first?: string; second?: string; third?: string } } = {}
       winnersData.winners?.forEach((w: any) => {
-        winnerMap[w.category] = w.project_id
+        if (!winnerMap[w.category]) {
+          winnerMap[w.category] = {}
+        }
+        if (w.position === 1) winnerMap[w.category].first = w.project_id
+        if (w.position === 2) winnerMap[w.category].second = w.project_id
+        if (w.position === 3) winnerMap[w.category].third = w.project_id
       })
       setSelectedWinners(winnerMap)
     } catch (error) {
@@ -250,11 +261,25 @@ export default function SecretAdminPage() {
     }
   }
 
-  // Announce winner
-  const announceWinner = async (category: string) => {
-    const projectId = selectedWinners[category]
+  // Announce winner with position
+  const announceWinner = async (category: string, position: number) => {
+    const positionKey = position === 1 ? 'first' : position === 2 ? 'second' : 'third'
+    const projectId = selectedWinners[category]?.[positionKey]
+    
     if (!projectId) {
       alert('Please select a team first')
+      return
+    }
+
+    const project = projects.find(p => p.id === projectId)
+    if (!project) {
+      alert('Project not found')
+      return
+    }
+
+    const positionName = position === 1 ? '1st Place' : position === 2 ? '2nd Place' : '3rd Place'
+    
+    if (!confirm(`Announce ${project.team_name} as ${positionName} for ${category}?`)) {
       return
     }
 
@@ -264,12 +289,15 @@ export default function SecretAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           category,
-          project_id: projectId,
+          teamId: projectId,
+          teamName: project.team_name,
+          score: null,
+          position,
         }),
       })
 
       if (response.ok) {
-        alert(`✅ Winner announced for ${category}!`)
+        alert(`✅ ${positionName} announced for ${category}!`)
         fetchData()
       } else {
         const error = await response.json()
@@ -1013,7 +1041,7 @@ export default function SecretAdminPage() {
 
                 {/* Rankings Section */}
                 {(() => {
-                  // Calculate cumulative scores for all projects
+                  // Calculate scores for all projects
                   const projectScores = new Map()
                   
                   scores.forEach((score: any) => {
@@ -1044,14 +1072,46 @@ export default function SecretAdminPage() {
                       // Apply category filter
                       if (selectedResultCategory !== 'All' && project.category !== selectedResultCategory) return null
                       
+                      // Calculate standard deviation for fairness indicator
+                      const mean = data.totalScore / data.judgeCount
+                      const variance = data.scores.reduce((sum: number, s: any) => 
+                        sum + Math.pow(s.total_score - mean, 2), 0) / data.judgeCount
+                      const stdDev = Math.sqrt(variance)
+                      
+                      // Confidence level based on number of judges
+                      let confidenceLevel = 'Low'
+                      let confidenceColor = 'bg-[#ff6b9d]'
+                      if (data.judgeCount >= 5) {
+                        confidenceLevel = 'High'
+                        confidenceColor = 'bg-[#c7f464]'
+                      } else if (data.judgeCount >= 3) {
+                        confidenceLevel = 'Medium'
+                        confidenceColor = 'bg-[#ffd93d]'
+                      }
+                      
                       return {
                         project,
                         ...data,
-                        cumulativeScore: data.totalScore
+                        cumulativeScore: data.totalScore,
+                        averageScore: data.totalScore / data.judgeCount,
+                        stdDev,
+                        confidenceLevel,
+                        confidenceColor
                       }
                     })
                     .filter(Boolean)
-                    .sort((a: any, b: any) => b.cumulativeScore - a.cumulativeScore)
+                    .sort((a: any, b: any) => {
+                      // Primary sort: Average score (descending)
+                      if (Math.abs(a.averageScore - b.averageScore) > 0.1) {
+                        return b.averageScore - a.averageScore
+                      }
+                      // Secondary sort: More judges = higher rank (for tie-breaking)
+                      if (a.judgeCount !== b.judgeCount) {
+                        return b.judgeCount - a.judgeCount
+                      }
+                      // Tertiary sort: Lower standard deviation = more consistent = higher rank
+                      return a.stdDev - b.stdDev
+                    })
                   
                   return (
                     <div className="bg-gradient-to-br from-[#fef6e4] to-[#fff9e5] border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
@@ -1072,6 +1132,39 @@ export default function SecretAdminPage() {
                         <div className="bg-white border-3 border-black px-4 py-2">
                           <p className="text-xs font-black uppercase">Total Projects</p>
                           <p className="text-2xl font-black text-center">{filteredProjectsWithScores.length}</p>
+                        </div>
+                      </div>
+
+                      {/* Fairness Explanation */}
+                      <div className="bg-white border-3 border-black p-4 mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="flex items-start gap-3 mb-3">
+                          <span className="text-2xl">⚖️</span>
+                          <div>
+                            <h3 className="text-lg font-black uppercase mb-2">Fair Ranking System</h3>
+                            <p className="text-sm font-bold mb-2">Rankings are based on <span className="bg-[#a855f7] text-white px-2 py-1 border-2 border-black">Average Score</span>, not total points.</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <div className="bg-[#fef6e4] border-2 border-black p-3">
+                            <p className="font-black uppercase mb-1">1️⃣ Primary Sort</p>
+                            <p className="font-bold">Average Score (High to Low)</p>
+                          </div>
+                          <div className="bg-[#fef6e4] border-2 border-black p-3">
+                            <p className="font-black uppercase mb-1">2️⃣ Tie-Breaker</p>
+                            <p className="font-bold">More Judges = Higher Rank</p>
+                          </div>
+                          <div className="bg-[#fef6e4] border-2 border-black p-3">
+                            <p className="font-black uppercase mb-1">3️⃣ Final Tie-Breaker</p>
+                            <p className="font-bold">Lower Variance = More Consistent</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t-2 border-black">
+                          <p className="text-xs font-black uppercase mb-2">Confidence Levels:</p>
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            <span className="bg-[#c7f464] border-2 border-black px-3 py-1 font-black">High Confidence: 5+ Judges</span>
+                            <span className="bg-[#ffd93d] border-2 border-black px-3 py-1 font-black">Medium Confidence: 3-4 Judges</span>
+                            <span className="bg-[#ff6b9d] text-white border-2 border-black px-3 py-1 font-black">Low Confidence: 1-2 Judges</span>
+                          </div>
                         </div>
                       </div>
 
@@ -1105,18 +1198,32 @@ export default function SecretAdminPage() {
                                     <div className="flex-1 min-w-0">
                                       <h3 className="text-xl md:text-2xl font-black uppercase mb-2 break-words">{item.project.title}</h3>
                                       <p className="text-sm font-bold mb-1">Team: {item.project.team_name}</p>
-                                      <span className="bg-[#c7f464] border-2 border-black px-3 py-1 text-xs font-black inline-block">
-                                        {item.project.category}
-                                      </span>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="bg-[#c7f464] border-2 border-black px-3 py-1 text-xs font-black inline-block">
+                                          {item.project.category}
+                                        </span>
+                                        {/* Confidence Badge */}
+                                        <span className={`${item.confidenceColor} border-2 border-black px-3 py-1 text-xs font-black inline-block`}>
+                                          {item.confidenceLevel} Confidence
+                                        </span>
+                                        {/* Warning for low judge count */}
+                                        {item.judgeCount < 3 && (
+                                          <span className="bg-[#ff6b9d] text-white border-2 border-black px-3 py-1 text-xs font-black inline-block animate-pulse">
+                                            ⚠️ Only {item.judgeCount} Judge{item.judgeCount !== 1 ? 's' : ''}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
 
-                                    {/* Cumulative Score */}
+                                    {/* Average Score - Primary Metric */}
                                     <div className="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white border-4 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[140px] text-center flex-shrink-0">
-                                      <p className="text-xs font-black uppercase mb-1">Cumulative Score</p>
-                                      <p className="text-5xl font-black">{item.cumulativeScore}</p>
-                                      <p className="text-xs font-bold mt-1">from {item.judgeCount} judge{item.judgeCount !== 1 ? 's' : ''}</p>
+                                      <p className="text-xs font-black uppercase mb-1">Average Score</p>
+                                      <p className="text-5xl font-black">{item.averageScore.toFixed(1)}</p>
+                                      <p className="text-xs font-bold mt-1">out of 60</p>
                                       <div className="mt-2 pt-2 border-t-2 border-white/30">
-                                        <p className="text-xs font-bold">Avg: {(item.cumulativeScore / item.judgeCount).toFixed(1)}/60</p>
+                                        <p className="text-xs font-bold">Total: {item.cumulativeScore}</p>
+                                        <p className="text-xs font-bold">Judges: {item.judgeCount}</p>
+                                        <p className="text-xs font-bold">±{item.stdDev.toFixed(1)} variance</p>
                                       </div>
                                     </div>
                                   </div>
@@ -1179,7 +1286,7 @@ export default function SecretAdminPage() {
                 <Trophy size={32} strokeWidth={3} />
                 <h2 className="text-3xl font-black uppercase">Announce Winners</h2>
               </div>
-              <p className="font-bold">Select and announce the winning team for each category</p>
+              <p className="font-bold">Select 1st, 2nd, and 3rd place for each category. Announce 3rd place first, then 2nd, then 1st!</p>
             </div>
 
             {dataLoading ? (
@@ -1190,60 +1297,170 @@ export default function SecretAdminPage() {
               <div className="space-y-6">
                 {['AI/ML', 'Cybersecurity and Blockchain', 'Open Innovation', 'Software and Automation', 'Clubs and Chapter'].map((category) => {
                   const categoryProjects = projects.filter(p => p.category === category)
-                  const currentWinner = winners.find(w => w.category === category)
+                  const firstPlace = winners.find(w => w.category === category && w.position === 1)
+                  const secondPlace = winners.find(w => w.category === category && w.position === 2)
+                  const thirdPlace = winners.find(w => w.category === category && w.position === 3)
                   
                   return (
                     <div key={category} className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-6">
                         <h3 className="text-2xl font-black uppercase">{category}</h3>
                         <span className="bg-[#c7f464] border-2 border-black px-4 py-2 text-sm font-black">
                           {categoryProjects.length} Teams
                         </span>
                       </div>
 
-                      {/* Current Winner Display */}
-                      {currentWinner && (
-                        <div className="bg-[#ffd93d] border-3 border-black p-4 mb-4 flex items-center gap-4">
-                          <Trophy size={32} strokeWidth={3} />
-                          <div>
-                            <p className="text-xs font-black uppercase mb-1">Current Winner</p>
-                            <p className="text-xl font-black">{currentWinner.team_name}</p>
+                      {/* Current Winners Display */}
+                      {(firstPlace || secondPlace || thirdPlace) && (
+                        <div className="mb-6 space-y-3">
+                          <p className="text-sm font-black uppercase mb-3">Current Winners:</p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {firstPlace && (
+                              <div className="bg-[#ffd93d] border-3 border-black p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-2xl">🥇</span>
+                                  <p className="text-xs font-black uppercase">1st Place</p>
+                                </div>
+                                <p className="text-lg font-black">{firstPlace.team_name}</p>
+                              </div>
+                            )}
+                            {secondPlace && (
+                              <div className="bg-[#c0c0c0] border-3 border-black p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-2xl">🥈</span>
+                                  <p className="text-xs font-black uppercase">2nd Place</p>
+                                </div>
+                                <p className="text-lg font-black">{secondPlace.team_name}</p>
+                              </div>
+                            )}
+                            {thirdPlace && (
+                              <div className="bg-[#cd7f32] border-3 border-black p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-2xl">🥉</span>
+                                  <p className="text-xs font-black uppercase">3rd Place</p>
+                                </div>
+                                <p className="text-lg font-black">{thirdPlace.team_name}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
 
-                      {/* Team Selection */}
-                      <div className="space-y-3">
-                        <label className="text-sm font-black uppercase">Select Winning Team:</label>
-                        <select
-                          value={selectedWinners[category] || ''}
-                          onChange={(e) => setSelectedWinners({ ...selectedWinners, [category]: e.target.value })}
-                          className="w-full px-4 py-3 border-3 border-black font-bold text-base"
-                        >
-                          <option value="">-- Choose a team --</option>
-                          {categoryProjects
-                            .sort((a, b) => a.team_name.localeCompare(b.team_name))
-                            .map((project) => (
-                              <option key={project.id} value={project.id}>
-                                {project.team_name}
-                              </option>
-                            ))}
-                        </select>
+                      {/* Team Selection for Each Position */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* 3rd Place */}
+                        <div className="bg-gradient-to-br from-[#cd7f32]/20 to-[#cd7f32]/10 border-3 border-black p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-3xl">🥉</span>
+                            <div>
+                              <p className="text-xs font-black uppercase">Step 1: Select</p>
+                              <h4 className="text-xl font-black">3rd Place</h4>
+                            </div>
+                          </div>
+                          <select
+                            value={selectedWinners[category]?.third || ''}
+                            onChange={(e) => setSelectedWinners({ 
+                              ...selectedWinners, 
+                              [category]: { ...selectedWinners[category], third: e.target.value } 
+                            })}
+                            className="w-full px-3 py-2 border-2 border-black font-bold text-sm mb-3"
+                          >
+                            <option value="">-- Choose team --</option>
+                            {categoryProjects
+                              .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                              .map((project) => (
+                                <option key={project.id} value={project.id}>
+                                  {project.team_name}
+                                </option>
+                              ))}
+                          </select>
+                          <Button
+                            onClick={() => announceWinner(category, 3)}
+                            disabled={!selectedWinners[category]?.third}
+                            className="w-full bg-[#cd7f32] hover:bg-[#b8732d] text-white border-2 border-black font-black text-sm"
+                            size="sm"
+                          >
+                            {thirdPlace ? '✏️ UPDATE' : '📢 ANNOUNCE'}
+                          </Button>
+                        </div>
 
-                        <Button
-                          onClick={() => announceWinner(category)}
-                          disabled={!selectedWinners[category]}
-                          className="w-full bg-[#ff6b9d] hover:bg-[#ff4081] border-3 border-black font-black uppercase text-lg h-14 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
-                        >
-                          <Trophy size={20} strokeWidth={3} className="mr-2" />
-                          {currentWinner ? 'Update Winner' : 'Announce Winner'}
-                        </Button>
+                        {/* 2nd Place */}
+                        <div className="bg-gradient-to-br from-[#c0c0c0]/30 to-[#c0c0c0]/10 border-3 border-black p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-3xl">🥈</span>
+                            <div>
+                              <p className="text-xs font-black uppercase">Step 2: Select</p>
+                              <h4 className="text-xl font-black">2nd Place</h4>
+                            </div>
+                          </div>
+                          <select
+                            value={selectedWinners[category]?.second || ''}
+                            onChange={(e) => setSelectedWinners({ 
+                              ...selectedWinners, 
+                              [category]: { ...selectedWinners[category], second: e.target.value } 
+                            })}
+                            className="w-full px-3 py-2 border-2 border-black font-bold text-sm mb-3"
+                          >
+                            <option value="">-- Choose team --</option>
+                            {categoryProjects
+                              .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                              .map((project) => (
+                                <option key={project.id} value={project.id}>
+                                  {project.team_name}
+                                </option>
+                              ))}
+                          </select>
+                          <Button
+                            onClick={() => announceWinner(category, 2)}
+                            disabled={!selectedWinners[category]?.second}
+                            className="w-full bg-[#c0c0c0] hover:bg-[#a8a8a8] text-black border-2 border-black font-black text-sm"
+                            size="sm"
+                          >
+                            {secondPlace ? '✏️ UPDATE' : '📢 ANNOUNCE'}
+                          </Button>
+                        </div>
+
+                        {/* 1st Place */}
+                        <div className="bg-gradient-to-br from-[#ffd93d]/40 to-[#ffd93d]/10 border-3 border-black p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-3xl">🥇</span>
+                            <div>
+                              <p className="text-xs font-black uppercase">Step 3: Select</p>
+                              <h4 className="text-xl font-black">1st Place</h4>
+                            </div>
+                          </div>
+                          <select
+                            value={selectedWinners[category]?.first || ''}
+                            onChange={(e) => setSelectedWinners({ 
+                              ...selectedWinners, 
+                              [category]: { ...selectedWinners[category], first: e.target.value } 
+                            })}
+                            className="w-full px-3 py-2 border-2 border-black font-bold text-sm mb-3"
+                          >
+                            <option value="">-- Choose team --</option>
+                            {categoryProjects
+                              .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                              .map((project) => (
+                                <option key={project.id} value={project.id}>
+                                  {project.team_name}
+                                </option>
+                              ))}
+                          </select>
+                          <Button
+                            onClick={() => announceWinner(category, 1)}
+                            disabled={!selectedWinners[category]?.first}
+                            className="w-full bg-[#ffd93d] hover:bg-[#ffc107] text-black border-2 border-black font-black text-sm"
+                            size="sm"
+                          >
+                            {firstPlace ? '✏️ UPDATE' : '📢 ANNOUNCE'}
+                          </Button>
+                        </div>
                       </div>
 
                       {/* Top 3 Teams by Score */}
                       {scores.length > 0 && (
                         <div className="mt-6 pt-6 border-t-3 border-black">
-                          <p className="text-sm font-black uppercase mb-3">Top 3 Teams by Score:</p>
+                          <p className="text-sm font-black uppercase mb-3">💡 Top 3 Teams by Judge Scores:</p>
                           <div className="space-y-2">
                             {categoryProjects
                               .map(project => {
