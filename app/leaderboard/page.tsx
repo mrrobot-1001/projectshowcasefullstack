@@ -49,19 +49,37 @@ export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([])
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchLeaderboard()
+    // Debounce API calls
+    const timer = setTimeout(() => {
+      fetchLeaderboard()
+    }, 300)
+
+    return () => clearTimeout(timer)
   }, [selectedCategory])
 
   const fetchLeaderboard = async () => {
     setLoading(true)
+    setError(null)
     try {
       const url = selectedCategory === 'All'
         ? '/api/leaderboard'
         : `/api/leaderboard?category=${encodeURIComponent(selectedCategory)}`
 
-      const response = await fetch(url)
+      const response = await fetch(url, {
+        // Add cache headers
+        headers: {
+          'Cache-Control': 'max-age=30'
+        }
+      })
+
+      if (response.status === 429) {
+        setError('Too many requests. Please wait a moment.')
+        return
+      }
+
       const data = await response.json()
 
       if (response.ok && data.leaderboard) {
@@ -71,6 +89,7 @@ export default function LeaderboardPage() {
       }
     } catch (error) {
       console.error('Failed to fetch leaderboard:', error)
+      setError('Failed to load leaderboard. Please try again.')
       setLeaderboard([])
     } finally {
       setLoading(false)

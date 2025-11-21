@@ -27,7 +27,8 @@ export default function SecretAdminPage() {
   const [selectedJudge, setSelectedJudge] = useState('All')
   
   // Winner selection
-  const [selectedWinners, setSelectedWinners] = useState<{ [category: string]: string }>({})
+  const [selectedWinners, setSelectedWinners] = useState<{ [category: string]: { first?: string; second?: string; third?: string } }>({})
+  const [announceLoading, setAnnounceLoading] = useState(false)
 
   const [editingTeam, setEditingTeam] = useState<any>(null)
   const [editingUser, setEditingUser] = useState<any>(null)
@@ -70,7 +71,12 @@ export default function SecretAdminPage() {
   const fetchData = async () => {
     setDataLoading(true)
     try {
-      const [statsRes, teamsRes, usersRes, projectsRes, scoresRes, winnersRes] = await Promise.all([
+      // Add timeout to prevent hanging forever
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
+      )
+
+      const fetchPromise = Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/teams'),
         fetch('/api/admin/users'),
@@ -79,12 +85,24 @@ export default function SecretAdminPage() {
         fetch('/api/winners'),
       ])
 
-      const statsData = await statsRes.json()
-      const teamsData = await teamsRes.json()
-      const usersData = await usersRes.json()
-      const projectsData = await projectsRes.json()
-      const scoresData = await scoresRes.json()
-      const winnersData = await winnersRes.json()
+      const [statsRes, teamsRes, usersRes, projectsRes, scoresRes, winnersRes] = await Promise.race([
+        fetchPromise,
+        timeout
+      ]) as Response[]
+
+      if (!statsRes.ok) console.error('Stats API failed:', await statsRes.text())
+      if (!teamsRes.ok) console.error('Teams API failed:', await teamsRes.text())
+      if (!usersRes.ok) console.error('Users API failed:', await usersRes.text())
+      if (!projectsRes.ok) console.error('Projects API failed:', await projectsRes.text())
+      if (!scoresRes.ok) console.error('Scores API failed:', await scoresRes.text())
+      if (!winnersRes.ok) console.error('Winners API failed:', await winnersRes.text())
+
+      const statsData = statsRes.ok ? await statsRes.json() : { stats: {} }
+      const teamsData = teamsRes.ok ? await teamsRes.json() : { teams: [] }
+      const usersData = usersRes.ok ? await usersRes.json() : { users: [] }
+      const projectsData = projectsRes.ok ? await projectsRes.json() : { projects: [] }
+      const scoresData = scoresRes.ok ? await scoresRes.json() : []
+      const winnersData = winnersRes.ok ? await winnersRes.json() : { winners: [] }
 
       setStats(statsData.stats)
       setTeams(teamsData.teams || [])
@@ -93,14 +111,27 @@ export default function SecretAdminPage() {
       setScores(Array.isArray(scoresData) ? scoresData : [])
       setWinners(winnersData.winners || [])
       
-      // Initialize selected winners from existing winners
-      const winnerMap: { [category: string]: string } = {}
+      // Initialize selected winners from existing winners (grouped by position)
+      const winnerMap: { [category: string]: { first?: string; second?: string; third?: string } } = {}
       winnersData.winners?.forEach((w: any) => {
-        winnerMap[w.category] = w.project_id
+        if (!winnerMap[w.category]) {
+          winnerMap[w.category] = {}
+        }
+        if (w.position === 1) winnerMap[w.category].first = w.project_id
+        if (w.position === 2) winnerMap[w.category].second = w.project_id
+        if (w.position === 3) winnerMap[w.category].third = w.project_id
       })
       setSelectedWinners(winnerMap)
     } catch (error) {
       console.error('Failed to fetch data:', error)
+      alert('⚠️ Failed to load data. Your Supabase project may be exhausting resources. Please check the Supabase dashboard.')
+      // Set empty data so page doesn't hang
+      setStats({})
+      setTeams([])
+      setUsers([])
+      setProjects([])
+      setScores([])
+      setWinners([])
     } finally {
       setDataLoading(false)
     }
@@ -251,12 +282,26 @@ export default function SecretAdminPage() {
   }
 
   // Announce winner
-  const announceWinner = async (category: string) => {
-    const projectId = selectedWinners[category]
+  const announceWinner = async (category: string, position: number) => {
+    const projectId = position === 1 
+      ? selectedWinners[category]?.first 
+      : position === 2 
+      ? selectedWinners[category]?.second 
+      : selectedWinners[category]?.third
+
     if (!projectId) {
       alert('Please select a team first')
       return
     }
+
+    // Find the project details
+    const project = projects.find(p => p.id === projectId)
+    if (!project) {
+      alert('Project not found')
+      return
+    }
+
+    setAnnounceLoading(true)
 
     try {
       const response = await fetch('/api/winners', {
@@ -264,19 +309,38 @@ export default function SecretAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           category,
-          project_id: projectId,
+          teamId: projectId,
+          teamName: project.team_name,
+          score: 0, // Can be updated with actual score if needed
+          position
         }),
       })
 
       if (response.ok) {
-        alert(`✅ Winner announced for ${category}!`)
-        fetchData()
+        const positionText = position === 1 ? '🥇 1st' : position === 2 ? '🥈 2nd' : '🥉 3rd'
+        
+        // Show toast notification
+        const toast = document.createElement('div')
+        toast.className = 'fixed top-4 right-4 bg-[#10b981] text-white border-3 border-black px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50 font-black'
+        toast.innerHTML = `✅ ${positionText} Place announced for ${category}!`
+        document.body.appendChild(toast)
+        
+        setTimeout(() => {
+          toast.style.transition = 'opacity 0.3s'
+          toast.style.opacity = '0'
+          setTimeout(() => toast.remove(), 300)
+        }, 3000)
+
+        // Refresh data without reload
+        await fetchData()
       } else {
         const error = await response.json()
         alert(`❌ Failed: ${error.error}`)
       }
     } catch (error) {
       alert('Error announcing winner')
+    } finally {
+      setAnnounceLoading(false)
     }
   }
 
@@ -822,7 +886,7 @@ export default function SecretAdminPage() {
                   <Trophy size={32} strokeWidth={3} />
                   Judging Results & Rankings
                 </h2>
-                <p className="font-bold mt-1">Cumulative scores and category-based rankings</p>
+                <p className="font-bold mt-1">Ranked by average score for fair evaluation</p>
               </div>
               <Button 
                 onClick={fetchData} 
@@ -1047,11 +1111,19 @@ export default function SecretAdminPage() {
                       return {
                         project,
                         ...data,
-                        cumulativeScore: data.totalScore
+                        cumulativeScore: data.totalScore,
+                        averageScore: data.judgeCount > 0 ? data.totalScore / data.judgeCount : 0
                       }
                     })
                     .filter(Boolean)
-                    .sort((a: any, b: any) => b.cumulativeScore - a.cumulativeScore)
+                    .sort((a: any, b: any) => {
+                      // Sort by average score (primary)
+                      const avgDiff = b.averageScore - a.averageScore
+                      if (Math.abs(avgDiff) > 0.01) return avgDiff
+                      
+                      // If averages are equal, sort by judge count (more judges = higher)
+                      return b.judgeCount - a.judgeCount
+                    })
                   
                   return (
                     <div className="bg-gradient-to-br from-[#fef6e4] to-[#fff9e5] border-4 border-black p-4 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
@@ -1110,13 +1182,31 @@ export default function SecretAdminPage() {
                                       </span>
                                     </div>
 
-                                    {/* Cumulative Score */}
+                                    {/* Average Score - Primary Display */}
                                     <div className="bg-gradient-to-br from-[#a855f7] to-[#7c3aed] text-white border-4 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[140px] text-center flex-shrink-0">
-                                      <p className="text-xs font-black uppercase mb-1">Cumulative Score</p>
-                                      <p className="text-5xl font-black">{item.cumulativeScore}</p>
-                                      <p className="text-xs font-bold mt-1">from {item.judgeCount} judge{item.judgeCount !== 1 ? 's' : ''}</p>
+                                      <p className="text-xs font-black uppercase mb-1">Average Score</p>
+                                      <p className="text-5xl font-black">{item.averageScore.toFixed(1)}</p>
+                                      <p className="text-xs font-bold mt-1">out of 60</p>
                                       <div className="mt-2 pt-2 border-t-2 border-white/30">
-                                        <p className="text-xs font-bold">Avg: {(item.cumulativeScore / item.judgeCount).toFixed(1)}/60</p>
+                                        <p className="text-xs font-bold">
+                                          {item.judgeCount} judge{item.judgeCount !== 1 ? 's' : ''}
+                                        </p>
+                                        <p className="text-xs font-bold opacity-75">
+                                          Total: {item.cumulativeScore}
+                                        </p>
+                                        {item.judgeCount >= 3 ? (
+                                          <span className="inline-block mt-1 bg-[#10b981] text-white text-[10px] font-black px-2 py-0.5 rounded">
+                                            ✓ RELIABLE
+                                          </span>
+                                        ) : item.judgeCount >= 2 ? (
+                                          <span className="inline-block mt-1 bg-[#ffd93d] text-black text-[10px] font-black px-2 py-0.5 rounded">
+                                            ⚠ FAIR
+                                          </span>
+                                        ) : (
+                                          <span className="inline-block mt-1 bg-[#ff6b9d] text-white text-[10px] font-black px-2 py-0.5 rounded">
+                                            ! LOW DATA
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1179,7 +1269,7 @@ export default function SecretAdminPage() {
                 <Trophy size={32} strokeWidth={3} />
                 <h2 className="text-3xl font-black uppercase">Announce Winners</h2>
               </div>
-              <p className="font-bold">Select and announce the winning team for each category</p>
+              <p className="font-bold">Select and announce 1st, 2nd, and 3rd place for each category</p>
             </div>
 
             {dataLoading ? (
@@ -1187,63 +1277,164 @@ export default function SecretAdminPage() {
                 <p className="text-xl font-black animate-pulse">LOADING...</p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {['AI/ML', 'Cybersecurity and Blockchain', 'Open Innovation', 'Software and Automation', 'Clubs and Chapter'].map((category) => {
+              <div className="space-y-8">
+                {['AI/ML', 'Cybersecurity and Blockchain', 'SEAS', 'Software and Automation', 'Clubs and Chapter', 'Open Innovation'].map((category) => {
                   const categoryProjects = projects.filter(p => p.category === category)
-                  const currentWinner = winners.find(w => w.category === category)
+                  const categoryWinners = winners.filter(w => w.category === category)
+                  const firstPlace = categoryWinners.find(w => w.position === 1)
+                  const secondPlace = categoryWinners.find(w => w.position === 2)
+                  const thirdPlace = categoryWinners.find(w => w.position === 3)
                   
                   return (
                     <div key={category} className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-6">
                         <h3 className="text-2xl font-black uppercase">{category}</h3>
                         <span className="bg-[#c7f464] border-2 border-black px-4 py-2 text-sm font-black">
                           {categoryProjects.length} Teams
                         </span>
                       </div>
 
-                      {/* Current Winner Display */}
-                      {currentWinner && (
-                        <div className="bg-[#ffd93d] border-3 border-black p-4 mb-4 flex items-center gap-4">
-                          <Trophy size={32} strokeWidth={3} />
-                          <div>
-                            <p className="text-xs font-black uppercase mb-1">Current Winner</p>
-                            <p className="text-xl font-black">{currentWinner.team_name}</p>
-                          </div>
+                      {/* Current Winners Display */}
+                      {(firstPlace || secondPlace || thirdPlace) && (
+                        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* 3rd Place */}
+                          {thirdPlace && (
+                            <div className="bg-gradient-to-br from-[#cd7f32] to-[#8b5a2b] border-3 border-black p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-3xl">🥉</span>
+                                <p className="text-xs font-black uppercase text-white">3rd Place</p>
+                              </div>
+                              <p className="text-lg font-black text-white">{thirdPlace.team_name}</p>
+                            </div>
+                          )}
+                          
+                          {/* 2nd Place */}
+                          {secondPlace && (
+                            <div className="bg-gradient-to-br from-[#c0c0c0] to-[#808080] border-3 border-black p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-3xl">🥈</span>
+                                <p className="text-xs font-black uppercase text-white">2nd Place</p>
+                              </div>
+                              <p className="text-lg font-black text-white">{secondPlace.team_name}</p>
+                            </div>
+                          )}
+                          
+                          {/* 1st Place */}
+                          {firstPlace && (
+                            <div className="bg-gradient-to-br from-[#ffd93d] to-[#ffc107] border-3 border-black p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-3xl">🥇</span>
+                                <p className="text-xs font-black uppercase">1st Place</p>
+                              </div>
+                              <p className="text-lg font-black">{firstPlace.team_name}</p>
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      {/* Team Selection */}
-                      <div className="space-y-3">
-                        <label className="text-sm font-black uppercase">Select Winning Team:</label>
-                        <select
-                          value={selectedWinners[category] || ''}
-                          onChange={(e) => setSelectedWinners({ ...selectedWinners, [category]: e.target.value })}
-                          className="w-full px-4 py-3 border-3 border-black font-bold text-base"
-                        >
-                          <option value="">-- Choose a team --</option>
-                          {categoryProjects
-                            .sort((a, b) => a.team_name.localeCompare(b.team_name))
-                            .map((project) => (
-                              <option key={project.id} value={project.id}>
-                                {project.team_name}
-                              </option>
-                            ))}
-                        </select>
+                      {/* Winner Selection - 3 Column Layout */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* 3rd Place Column */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">🥉</span>
+                            <label className="text-sm font-black uppercase">Step 1: Select 3rd Place</label>
+                          </div>
+                          <select
+                            value={selectedWinners[category]?.third || ''}
+                            onChange={(e) => setSelectedWinners({ 
+                              ...selectedWinners, 
+                              [category]: { ...selectedWinners[category], third: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 border-3 border-black font-bold text-sm"
+                          >
+                            <option value="">-- Choose --</option>
+                            {categoryProjects
+                              .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                              .map((project) => (
+                                <option key={project.id} value={project.id}>
+                                  {project.team_name}
+                                </option>
+                              ))}
+                          </select>
+                          <Button
+                            onClick={() => announceWinner(category, 3)}
+                            disabled={!selectedWinners[category]?.third || announceLoading}
+                            className="w-full bg-[#cd7f32] hover:bg-[#8b5a2b] text-white border-3 border-black font-black uppercase text-sm h-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                          >
+                            {announceLoading ? 'Announcing...' : (thirdPlace ? 'Update 3rd' : 'Announce 3rd')}
+                          </Button>
+                        </div>
 
-                        <Button
-                          onClick={() => announceWinner(category)}
-                          disabled={!selectedWinners[category]}
-                          className="w-full bg-[#ff6b9d] hover:bg-[#ff4081] border-3 border-black font-black uppercase text-lg h-14 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
-                        >
-                          <Trophy size={20} strokeWidth={3} className="mr-2" />
-                          {currentWinner ? 'Update Winner' : 'Announce Winner'}
-                        </Button>
+                        {/* 2nd Place Column */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">🥈</span>
+                            <label className="text-sm font-black uppercase">Step 2: Select 2nd Place</label>
+                          </div>
+                          <select
+                            value={selectedWinners[category]?.second || ''}
+                            onChange={(e) => setSelectedWinners({ 
+                              ...selectedWinners, 
+                              [category]: { ...selectedWinners[category], second: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 border-3 border-black font-bold text-sm"
+                          >
+                            <option value="">-- Choose --</option>
+                            {categoryProjects
+                              .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                              .map((project) => (
+                                <option key={project.id} value={project.id}>
+                                  {project.team_name}
+                                </option>
+                              ))}
+                          </select>
+                          <Button
+                            onClick={() => announceWinner(category, 2)}
+                            disabled={!selectedWinners[category]?.second || announceLoading}
+                            className="w-full bg-[#c0c0c0] hover:bg-[#808080] text-white border-3 border-black font-black uppercase text-sm h-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                          >
+                            {announceLoading ? 'Announcing...' : (secondPlace ? 'Update 2nd' : 'Announce 2nd')}
+                          </Button>
+                        </div>
+
+                        {/* 1st Place Column */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">🥇</span>
+                            <label className="text-sm font-black uppercase">Step 3: Select 1st Place</label>
+                          </div>
+                          <select
+                            value={selectedWinners[category]?.first || ''}
+                            onChange={(e) => setSelectedWinners({ 
+                              ...selectedWinners, 
+                              [category]: { ...selectedWinners[category], first: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 border-3 border-black font-bold text-sm"
+                          >
+                            <option value="">-- Choose --</option>
+                            {categoryProjects
+                              .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                              .map((project) => (
+                                <option key={project.id} value={project.id}>
+                                  {project.team_name}
+                                </option>
+                              ))}
+                          </select>
+                          <Button
+                            onClick={() => announceWinner(category, 1)}
+                            disabled={!selectedWinners[category]?.first || announceLoading}
+                            className="w-full bg-[#ffd93d] hover:bg-[#ffc107] border-3 border-black font-black uppercase text-sm h-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                          >
+                            {announceLoading ? 'Announcing...' : (firstPlace ? 'Update 1st' : 'Announce 1st')}
+                          </Button>
+                        </div>
                       </div>
 
-                      {/* Top 3 Teams by Score */}
+                      {/* Top Teams by Average Score */}
                       {scores.length > 0 && (
                         <div className="mt-6 pt-6 border-t-3 border-black">
-                          <p className="text-sm font-black uppercase mb-3">Top 3 Teams by Score:</p>
+                          <p className="text-sm font-black uppercase mb-3">Top Teams by Average Score:</p>
                           <div className="space-y-2">
                             {categoryProjects
                               .map(project => {
@@ -1255,7 +1446,7 @@ export default function SecretAdminPage() {
                               })
                               .filter(p => p.judgeCount > 0)
                               .sort((a, b) => b.avgScore - a.avgScore)
-                              .slice(0, 3)
+                              .slice(0, 5)
                               .map((project, index) => (
                                 <div key={project.id} className="bg-[#fef6e4] border-2 border-black p-3 flex items-center justify-between">
                                   <div className="flex items-center gap-3">

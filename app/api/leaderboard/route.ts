@@ -1,10 +1,33 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limiter'
+import { getCached, setCache } from '@/lib/cache'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
+    const clientIp = request.headers.get('x-forwarded-for') || 'anonymous'
+    
+    // Rate limiting: 30 requests per minute per IP
+    if (!rateLimit(clientIp, { interval: 60000, maxRequests: 30 })) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      )
+    }
+
+    // Check cache first (30 second TTL)
+    const cacheKey = `leaderboard:${category || 'all'}`
+    const cached = getCached<any>(cacheKey)
+    if (cached) {
+      return NextResponse.json({ leaderboard: cached }, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+          'X-Cache': 'HIT'
+        }
+      })
+    }
 
     const supabase = await createClient()
 
@@ -13,7 +36,7 @@ export async function GET(request: Request) {
       .select('id, title, team_name, category, likes_count')
       .order('likes_count', { ascending: false })
       .order('created_at', { ascending: true })
-      .limit(100) // Limit results for faster loading
+      .limit(100) // Limit results for performance
 
     if (category && category !== 'All') {
       query = query.eq('category', category)
@@ -31,12 +54,17 @@ export async function GET(request: Request) {
       rank: index + 1,
     })) || []
 
+    // Cache for 30 seconds
+    setCache(cacheKey, leaderboard, 30000)
+
     return NextResponse.json({ leaderboard }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30'
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+        'X-Cache': 'MISS'
       }
     })
   } catch (error) {
+    console.error('Leaderboard API error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

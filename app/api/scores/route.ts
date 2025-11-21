@@ -1,11 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limiter'
+import { getCached, setCache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const projectId = searchParams.get('projectId')
     const judgeId = searchParams.get('judgeId')
+    const clientIp = request.headers.get('x-forwarded-for') || 'anonymous'
+
+    // Rate limiting: 60 requests per minute
+    if (!rateLimit(`scores:${clientIp}`, { interval: 60000, maxRequests: 60 })) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      )
+    }
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json(
@@ -26,6 +37,13 @@ export async function GET(request: NextRequest) {
     )
 
     if (projectId && judgeId) {
+      // Check cache for specific score
+      const cacheKey = `score:${projectId}:${judgeId}`
+      const cached = getCached<any>(cacheKey)
+      if (cached) {
+        return NextResponse.json({ score: cached })
+      }
+
       // Get specific score
       const { data, error } = await supabase
         .from('scores')
@@ -38,18 +56,41 @@ export async function GET(request: NextRequest) {
         throw error
       }
 
+      // Cache for 5 minutes
+      if (data) {
+        setCache(cacheKey, data, 300000)
+      }
+
       return NextResponse.json({ score: data })
     }
 
-    // Get all scores (for admin results)
+    // Check cache for all scores
+    const allScoresCacheKey = 'scores:all'
+    const cachedAll = getCached<any[]>(allScoresCacheKey)
+    if (cachedAll) {
+      return NextResponse.json(cachedAll, {
+        headers: { 'X-Cache': 'HIT' }
+      })
+    }
+
+    // Get all scores (for admin results) - optimized query
     const { data, error } = await supabase
       .from('scores')
       .select('*')
       .order('created_at', { ascending: false })
+      .limit(1000) // Add limit to prevent excessive data transfer
 
     if (error) throw error
 
-    return NextResponse.json(data)
+    // Cache all scores for 1 minute
+    setCache(allScoresCacheKey, data, 60000)
+
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'X-Cache': 'MISS'
+      }
+    })
   } catch (error) {
     console.error('Error fetching scores:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
