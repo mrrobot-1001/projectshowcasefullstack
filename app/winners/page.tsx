@@ -34,24 +34,37 @@ export default function WinnersPage() {
       setLoading(true)
       setError(null)
 
-      // Fetch all scores from the API
-      const response = await fetch('/api/scores')
-      if (!response.ok) {
-        throw new Error('Failed to fetch scores')
+      // Fetch all scores and projects
+      const [scoresRes, projectsRes] = await Promise.all([
+        fetch('/api/scores'),
+        fetch('/api/projects')
+      ])
+
+      if (!scoresRes.ok || !projectsRes.ok) {
+        throw new Error('Failed to fetch data')
       }
 
-      const data = await response.json()
-      const scores = data.scores || []
+      const scores = await scoresRes.json()
+      const projects = await projectsRes.json()
+
+      // Create a map of project_id to project data
+      const projectMap: Record<string, any> = {}
+      projects.forEach((project: any) => {
+        projectMap[project.id] = project
+      })
 
       // Group scores by team and category
       const teamScores: Record<string, { totalScore: number; judgeCount: number; category: string; team_name: string }> = {}
 
       scores.forEach((score: any) => {
-        const key = `${score.team_name}_${score.category}`
+        const project = projectMap[score.project_id]
+        if (!project) return // Skip if project not found
+
+        const key = `${project.team_name}_${project.category}`
         if (!teamScores[key]) {
           teamScores[key] = {
-            team_name: score.team_name,
-            category: score.category,
+            team_name: project.team_name,
+            category: project.category,
             totalScore: 0,
             judgeCount: 0
           }
@@ -205,14 +218,9 @@ export default function WinnersPage() {
                             </div>
                           </div>
                           
-                          <h3 className="text-2xl md:text-3xl font-black uppercase leading-tight break-words mb-4">
+                          <h3 className="text-2xl md:text-3xl font-black uppercase leading-tight break-words">
                             {categoryWinners.first.team_name}
                           </h3>
-                          
-                          <div className="bg-black text-[#ffd93d] p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] space-y-1">
-                            <p className="font-black text-lg">⭐ {categoryWinners.first.averageScore.toFixed(1)}/100</p>
-                            <p className="text-xs font-bold uppercase">{categoryWinners.first.judgeCount} {categoryWinners.first.judgeCount === 1 ? 'Judge' : 'Judges'}</p>
-                          </div>
                         </div>
                       )}
 
@@ -228,14 +236,9 @@ export default function WinnersPage() {
                             </div>
                           </div>
                           
-                          <h3 className="text-xl md:text-2xl font-black uppercase leading-tight break-words mb-4">
+                          <h3 className="text-xl md:text-2xl font-black uppercase leading-tight break-words">
                             {categoryWinners.second.team_name}
                           </h3>
-                          
-                          <div className="bg-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 space-y-1">
-                            <p className="font-black text-lg">⭐ {categoryWinners.second.averageScore.toFixed(1)}/100</p>
-                            <p className="text-xs font-bold uppercase">{categoryWinners.second.judgeCount} {categoryWinners.second.judgeCount === 1 ? 'Judge' : 'Judges'}</p>
-                          </div>
                         </div>
                       )}
 
@@ -251,14 +254,9 @@ export default function WinnersPage() {
                             </div>
                           </div>
                           
-                          <h3 className="text-xl md:text-2xl font-black uppercase leading-tight break-words mb-4">
+                          <h3 className="text-xl md:text-2xl font-black uppercase leading-tight break-words">
                             {categoryWinners.third.team_name}
                           </h3>
-                          
-                          <div className="bg-[#8b5a2b] text-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 space-y-1">
-                            <p className="font-black text-lg">⭐ {categoryWinners.third.averageScore.toFixed(1)}/100</p>
-                            <p className="text-xs font-bold uppercase">{categoryWinners.third.judgeCount} {categoryWinners.third.judgeCount === 1 ? 'Judge' : 'Judges'}</p>
-                          </div>
                         </div>
                       )}
                     </div>
