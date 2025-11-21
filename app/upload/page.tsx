@@ -6,19 +6,7 @@ import { Navbar } from '@/components/navbar';
 import { Upload, Image as ImageIcon, Github, Globe, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-const categories = [
-  'Web Development',
-  'Mobile App',
-  'AI/ML',
-  'IoT',
-  'Game Development',
-  'AR/VR',
-  'Blockchain',
-  'Cloud Computing',
-  'Cybersecurity',
-  'Other'
-];
+import { CATEGORIES } from '@/lib/constants';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -30,7 +18,7 @@ export default function UploadPage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: categories[0],
+    category: CATEGORIES[0] as string,
     github_url: '',
     demo_url: '',
   });
@@ -224,7 +212,7 @@ export default function UploadPage() {
                   className="w-full px-4 py-3 border-3 border-black font-bold bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all outline-none"
                   required
                 >
-                  {categories.map((cat) => (
+                  {CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Navbar } from '@/components/navbar'
 import { Trophy, Medal, Sparkles } from 'lucide-react'
+import { CATEGORIES } from '@/lib/constants'
 
 interface LeaderboardItem {
   id: string
@@ -13,7 +14,7 @@ interface LeaderboardItem {
   likes_count: number
 }
 
-const CATEGORIES = ['All', 'Web Development', 'Mobile App', 'AI/ML', 'Game Dev', 'IoT', 'Cloud', 'Design']
+const CATEGORY_OPTIONS = ['All', ...CATEGORIES]
 
 function getRankBadge(rank: number) {
   if (rank === 1) {
@@ -112,7 +113,7 @@ export default function LeaderboardPage() {
 
               <div className="max-w-2xl">
                 <p className="text-lg md:text-xl lg:text-2xl font-medium text-white/70 leading-relaxed mb-8">
-                  Top projects ranked by community votes
+                  Top teams ranked by community votes
                 </p>
 
                 {/* Stats Bar */}
@@ -139,7 +140,7 @@ export default function LeaderboardPage() {
 
           {/* Category Filter Pills */}
           <div className="mb-6 sm:mb-8 flex gap-2 sm:gap-3 overflow-x-auto pb-3 scrollbar-hide">
-            {CATEGORIES.map((category) => (
+            {CATEGORY_OPTIONS.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}

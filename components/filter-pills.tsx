@@ -1,19 +1,15 @@
 'use client'
 
 import { memo } from 'react'
+import { CATEGORIES } from '@/lib/constants'
 
-const CATEGORIES = [
+const CATEGORY_COLORS = [
   { name: 'All', color: 'bg-black' },
-  { name: 'Web Development', color: 'bg-[#3b82f6]' },
-  { name: 'Mobile App', color: 'bg-[#8b5cf6]' },
+  { name: 'Clubs and Chapter', color: 'bg-[#3b82f6]' },
   { name: 'AI/ML', color: 'bg-[#ec4899]' },
-  { name: 'IoT', color: 'bg-[#06b6d4]' },
-  { name: 'Game Development', color: 'bg-[#f59e0b]' },
-  { name: 'AR/VR', color: 'bg-[#10b981]' },
-  { name: 'Blockchain', color: 'bg-[#6366f1]' },
-  { name: 'Cloud Computing', color: 'bg-[#14b8a6]' },
-  { name: 'Cybersecurity', color: 'bg-[#ef4444]' },
-  { name: 'Other', color: 'bg-[#64748b]' }
+  { name: 'Cybersecurity and Blockchain', color: 'bg-[#6366f1]' },
+  { name: 'Open Innovation', color: 'bg-[#10b981]' },
+  { name: 'Software and Automation', color: 'bg-[#f59e0b]' }
 ]
 
 interface FilterPillsProps {
@@ -24,7 +20,7 @@ interface FilterPillsProps {
 export const FilterPills = memo(function FilterPills({ onSelectCategory, selectedCategory }: FilterPillsProps) {
   return (
     <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
-      {CATEGORIES.map((category) => (
+      {CATEGORY_COLORS.map((category) => (
         <button
           key={category.name}
           onClick={() => onSelectCategory(category.name)}

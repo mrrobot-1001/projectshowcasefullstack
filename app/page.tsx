@@ -98,12 +98,12 @@ export default function Home() {
               </div>
 
               <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-white tracking-tight leading-[0.9]">
-                Project<br />Showcase
+                Team<br />Showcase
               </h1>
 
               <div className="max-w-2xl">
                 <p className="text-lg md:text-xl lg:text-2xl font-medium text-white/70 leading-relaxed mb-8">
-                  Discover innovative projects from Bennett University students
+                  Discover innovative teams from Bennett University students
                 </p>
 
                 {/* Stats Bar */}
@@ -126,7 +126,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Projects Section */}
+        {/* Teams Section */}
         <section className="px-4 sm:px-6 py-12 md:py-16 lg:py-20 bg-gray-50">
           <div className="container mx-auto max-w-7xl">
             <div className="mb-10 md:mb-12">
@@ -145,8 +145,8 @@ export default function Home() {
                 <div className="w-16 h-16 mx-auto mb-6 bg-gray-100 border-3 border-black flex items-center justify-center">
                   <span className="text-3xl">📂</span>
                 </div>
-                <p className="text-2xl font-black text-black mb-2">No Projects Found</p>
-                <p className="text-base font-medium text-gray-600">Try selecting a different category or upload your own project</p>
+                <p className="text-2xl font-black text-black mb-2">No Teams Found</p>
+                <p className="text-base font-medium text-gray-600">Try selecting a different category</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
