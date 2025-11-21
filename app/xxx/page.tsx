@@ -1295,7 +1295,7 @@ export default function SecretAdminPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {['AI/ML', 'Cybersecurity and Blockchain', 'Open Innovation', 'Software and Automation', 'Clubs and Chapter'].map((category) => {
+                {['AI/ML', 'Cybersecurity and Blockchain', 'SEAS', 'Software and Automation', 'Clubs and Chapter'].map((category) => {
                   const categoryProjects = projects.filter(p => p.category === category)
                   const firstPlace = winners.find(w => w.category === category && w.position === 1)
                   const secondPlace = winners.find(w => w.category === category && w.position === 2)

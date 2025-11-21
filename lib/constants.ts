@@ -3,7 +3,7 @@ export const CATEGORIES = [
   'Clubs and Chapter',
   'AI/ML',
   'Cybersecurity and Blockchain',
-  'Open Innovation',
+  'SEAS',
   'Software and Automation'
 ] as const
 
