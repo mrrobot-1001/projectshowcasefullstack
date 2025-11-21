@@ -28,11 +28,19 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { category, teamId, teamName, score } = body
+    const { category, teamId, teamName, score, position } = body
 
-    if (!category || !teamName) {
+    if (!category || !teamName || !position) {
       return NextResponse.json(
-        { error: 'Category and team name are required' },
+        { error: 'Category, team name, and position are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate position is 1, 2, or 3
+    if (![1, 2, 3].includes(position)) {
+      return NextResponse.json(
+        { error: 'Position must be 1 (first), 2 (second), or 3 (third)' },
         { status: 400 }
       )
     }
@@ -42,11 +50,12 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Check if winner already exists for this category
+    // Check if winner already exists for this category and position
     const { data: existing } = await supabase
       .from('winners')
       .select('id')
       .eq('category', category)
+      .eq('position', position)
       .single()
 
     if (existing) {
@@ -70,7 +79,8 @@ export async function POST(request: Request) {
           category, 
           team_id: teamId, 
           team_name: teamName, 
-          score 
+          score,
+          position 
         })
 
       if (error) throw error
