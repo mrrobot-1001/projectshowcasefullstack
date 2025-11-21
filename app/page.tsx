@@ -21,6 +21,7 @@ export default function Home() {
   const [projects, setProjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetchProjects()
@@ -57,12 +58,23 @@ export default function Home() {
     }
   }, [])
 
-  const filteredProjects = useMemo(() =>
-    selectedCategory === 'All'
+  const filteredProjects = useMemo(() => {
+    let filtered = selectedCategory === 'All'
       ? projects
-      : projects.filter((p: any) => p.category === selectedCategory),
-    [selectedCategory, projects]
-  )
+      : projects.filter((p: any) => p.category === selectedCategory)
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter((p: any) => 
+        p.team_name?.toLowerCase().includes(query) ||
+        p.title?.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query)
+      )
+    }
+    
+    return filtered
+  }, [selectedCategory, projects, searchQuery])
 
   const handleCategoryChange = useCallback((category: string) => {
     setSelectedCategory(category)
@@ -129,9 +141,47 @@ export default function Home() {
         {/* Teams Section */}
         <section className="px-4 sm:px-6 py-12 md:py-16 lg:py-20 bg-gray-50">
           <div className="container mx-auto max-w-7xl">
-            <div className="mb-10 md:mb-12">
+            <div className="mb-10 md:mb-12 space-y-6">
+              {/* Search Bar */}
+              <div className="relative max-w-2xl">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search teams, projects, or descriptions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 text-base font-medium border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-black transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
               {/* Filter Pills */}
               <FilterPills onSelectCategory={handleCategoryChange} selectedCategory={selectedCategory} />
+              
+              {/* Results Counter */}
+              {!loading && (
+                <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
+                  <div className="w-2 h-2 bg-black"></div>
+                  <span>
+                    {filteredProjects.length} {filteredProjects.length === 1 ? 'Team' : 'Teams'}
+                    {searchQuery && ` matching "${searchQuery}"`}
+                    {selectedCategory !== 'All' && ` in ${selectedCategory}`}
+                  </span>
+                </div>
+              )}
             </div>
 
             {loading ? (
@@ -143,10 +193,22 @@ export default function Home() {
             ) : filteredProjects.length === 0 ? (
               <div className="bg-white border-3 border-black p-16 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <div className="w-16 h-16 mx-auto mb-6 bg-gray-100 border-3 border-black flex items-center justify-center">
-                  <span className="text-3xl">📂</span>
+                  <span className="text-3xl">{searchQuery ? '�' : '�📂'}</span>
                 </div>
                 <p className="text-2xl font-black text-black mb-2">No Teams Found</p>
-                <p className="text-base font-medium text-gray-600">Try selecting a different category</p>
+                <p className="text-base font-medium text-gray-600">
+                  {searchQuery 
+                    ? `No results for "${searchQuery}". Try a different search term.`
+                    : 'Try selecting a different category'}
+                </p>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="mt-4 px-6 py-2.5 bg-black text-white border-3 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-800 transition-colors"
+                  >
+                    Clear Search
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">

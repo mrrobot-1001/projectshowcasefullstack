@@ -105,7 +105,7 @@ export async function GET(request: Request) {
       .from('projects')
       .select('*')
       .order('likes_count', { ascending: false })
-      .limit(100) // Limit results for better performance
+      // No limit - we want to show all teams (139 total)
 
     if (category && category !== 'All') {
       query = query.eq('category', category)
