@@ -61,8 +61,11 @@ export function Navbar() {
               <button onClick={() => navigate('/leaderboard')} className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 LEADERBOARD
               </button>
-              <button onClick={() => navigate('/team')} className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                TEAMS
+              <button onClick={() => navigate('/about')} className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                ABOUT
+              </button>
+              <button onClick={() => navigate('/winners')} className="px-4 py-2 text-sm font-bold border-3 border-black bg-white hover:bg-[#c7f464] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                WINNERS
               </button>
             </div>
 
@@ -167,11 +170,20 @@ export function Navbar() {
               <button
                 onClick={() => {
                   setIsOpen(false)
-                  navigate('/team')
+                  navigate('/about')
                 }}
                 className="block w-full text-left px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.15s_both]"
               >
-                TEAMS
+                ABOUT
+              </button>
+              <button
+                onClick={() => {
+                  setIsOpen(false)
+                  navigate('/winners')
+                }}
+                className="block w-full text-left px-3 py-2 text-sm font-bold border-2 border-black bg-white hover:bg-[#c7f464] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-[fadeInUp_0.3s_ease-out_0.2s_both]"
+              >
+                WINNERS
               </button>
               {loading ? (
                 <div className="w-full h-20 bg-gray-200 border-3 border-black animate-pulse mt-4" />
@@ -208,7 +220,7 @@ export function Navbar() {
                   </div>
                 </>
               ) : (
-                <div className="flex gap-2 pt-4 border-t-3 border-black animate-[fadeInUp_0.3s_ease-out_0.2s_both]">
+                <div className="flex gap-2 pt-4 border-t-3 border-black animate-[fadeInUp_0.3s_ease-out_0.25s_both]">
                   <button
                     onClick={() => {
                       setIsOpen(false)

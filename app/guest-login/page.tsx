@@ -100,7 +100,7 @@ export default function GuestLoginPage() {
               <label className="text-sm font-black uppercase">Judge Email</label>
               <Input
                 type="email"
-                placeholder="buguest01@bennett.edu.in"
+                placeholder="Enter your judge email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { Heart } from 'lucide-react'
 import { useState, useEffect, memo } from 'react'
 
@@ -124,18 +123,34 @@ export const ProjectCard = memo(function ProjectCard({
 
   return (
     <div className={`group ${bgColor} border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200`}>
-      {/* Thumbnail */}
-      <div className="relative w-full h-48 md:h-56 bg-gray-100 overflow-hidden border-b-4 border-black">
-        <Image
-          src={imageUrl}
-          alt={title}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover group-hover:scale-110 transition-transform duration-300"
-          loading="lazy"
-          placeholder="blur"
-          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-        />
+      {/* Modern Header with Team Initial */}
+      <div className={`relative w-full h-48 md:h-56 overflow-hidden border-b-4 border-black ${trackColor}`}>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)`
+        }}></div>
+        
+        {/* Floating Geometric Shapes */}
+        <div className="absolute top-4 right-4 w-16 h-16 border-4 border-white/30 rotate-12 transition-transform group-hover:rotate-45 duration-500"></div>
+        <div className="absolute bottom-6 left-6 w-12 h-12 bg-white/20 border-3 border-white/40 -rotate-6 transition-transform group-hover:rotate-12 duration-500"></div>
+        <div className="absolute top-1/2 right-1/4 w-8 h-8 bg-white/10 border-2 border-white/30 rotate-45"></div>
+        
+        {/* Team Initial Circle */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative">
+            {/* Outer ring */}
+            <div className="absolute inset-0 w-32 h-32 border-4 border-white/30 rounded-full animate-pulse"></div>
+            {/* Inner circle with initial */}
+            <div className="w-32 h-32 bg-white/20 backdrop-blur-sm border-4 border-white/50 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
+              <span className="text-6xl font-black text-white drop-shadow-lg">
+                {title.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Bottom gradient overlay */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/30 to-transparent"></div>
       </div>
 
       {/* Content */}

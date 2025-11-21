@@ -6,7 +6,7 @@ import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Award, Search, LogOut, Star, X } from 'lucide-react'
-import Image from 'next/image'
+import { CATEGORIES } from '@/lib/constants'
 
 interface Project {
   id: string
@@ -14,7 +14,6 @@ interface Project {
   description: string
   category: string
   team_name: string
-  image_url: string
   likes_count: number
 }
 
@@ -50,7 +49,7 @@ export default function JudgePage() {
   const [submittingScore, setSubmittingScore] = useState(false)
   const [hasExistingScore, setHasExistingScore] = useState(false)
 
-  const categories = ['All', 'Web Development', 'Mobile App', 'AI/ML', 'Game Development', 'IoT', 'AR/VR', 'Cloud Computing', 'Data Science', 'Other']
+  const categories = ['All', ...CATEGORIES]
 
   useEffect(() => {
     // Check judge authentication
@@ -277,30 +276,23 @@ export default function JudgePage() {
             return (
               <div
                 key={project.id}
-                className={`bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer ${isScored ? 'opacity-75' : ''}`}
+                className={`bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer p-6 ${isScored ? 'opacity-75' : ''}`}
                 onClick={() => openScoringModal(project)}
               >
-                <div className="relative h-48 overflow-hidden border-b-4 border-black">
-                  <Image
-                    src={project.image_url || '/placeholder.jpg'}
-                    alt={project.title}
-                    fill
-                    className="object-cover"
-                  />
-                  {/* Scored Badge */}
-                  {isScored && (
-                    <div className="absolute top-3 right-3 bg-[#c7f464] border-3 border-black px-3 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2">
-                      <Star size={16} strokeWidth={3} className="fill-black" />
-                      <span className="text-xs font-black uppercase">SCORED</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-5">
-                  <h3 className="text-xl font-black uppercase mb-2 line-clamp-1">{project.title}</h3>
-                  <p className="text-sm font-bold text-gray-600 mb-3">{project.team_name}</p>
-                  <p className="text-sm mb-4 line-clamp-2">{project.description}</p>
-                  <div className="flex gap-2 items-center">
-                    <span className="bg-[#c7f464] border-2 border-black px-3 py-1 text-xs font-black">
+                {/* Scored Badge */}
+                {isScored && (
+                  <div className="mb-4 bg-[#c7f464] border-3 border-black px-3 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2 w-fit">
+                    <Star size={16} strokeWidth={3} className="fill-black" />
+                    <span className="text-xs font-black uppercase">SCORED</span>
+                  </div>
+                )}
+                
+                <div>
+                  <h3 className="text-2xl font-black uppercase mb-3 line-clamp-2">{project.title}</h3>
+                  <p className="text-base font-bold text-gray-600 mb-4">Team: {project.team_name}</p>
+                  <p className="text-sm mb-4 line-clamp-3">{project.description}</p>
+                  <div className="flex gap-3 items-center flex-wrap">
+                    <span className="bg-[#c7f464] border-2 border-black px-4 py-2 text-xs font-black">
                       {project.category}
                     </span>
                     <Button
@@ -309,7 +301,7 @@ export default function JudgePage() {
                         openScoringModal(project)
                       }}
                       size="sm"
-                      className={`ml-auto ${isScored ? 'bg-[#3b82f6] hover:bg-[#2563eb]' : 'bg-[#a855f7] hover:bg-[#7c3aed]'}`}
+                      className={`${isScored ? 'bg-[#3b82f6] hover:bg-[#2563eb]' : 'bg-[#a855f7] hover:bg-[#7c3aed]'}`}
                     >
                       <Star size={14} strokeWidth={3} className={`mr-1 ${isScored ? 'fill-white' : ''}`} />
                       {isScored ? 'VIEW SCORE' : 'SCORE'}

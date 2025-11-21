@@ -137,36 +137,6 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-
-            {/* Team Code Display - if user is team leader */}
-            {user.is_team_leader && user.team_code && (
-              <div className="mt-4 sm:mt-6 relative overflow-hidden bg-gradient-to-r from-[#c7f464] to-[#a8d92e] border-3 sm:border-4 border-black p-4 sm:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-[#ff6b9d] border-3 sm:border-4 border-black -mr-6 sm:-mr-8 -mt-6 sm:-mt-8 rotate-45"></div>
-                <h3 className="text-base sm:text-lg font-black mb-2 sm:mb-3 uppercase relative z-10 flex items-center gap-2">
-                  🎯 Your Team Code
-                </h3>
-                <div className="bg-white border-2 sm:border-3 border-black p-3 sm:p-4 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex-1 w-full">
-                      <p className="text-xs font-black uppercase mb-1 text-gray-600">Use this code to upload projects:</p>
-                      <code className="text-lg sm:text-2xl font-black font-mono bg-[#fef6e4] px-2 sm:px-3 py-1.5 sm:py-2 border-2 border-black inline-block break-all">
-                        {user.team_code}
-                      </code>
-                    </div>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(user.team_code)
-                        alert('Team code copied to clipboard!')
-                      }}
-                      className="w-full sm:w-auto shrink-0 px-3 sm:px-4 py-2 bg-[#3b82f6] text-white font-black border-2 sm:border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs sm:text-sm"
-                    >
-                      📋 COPY
-                    </button>
-                  </div>
-                </div>
-                <p className="text-xs font-bold mt-2 sm:mt-3 relative z-10">💡 Share this with your team to collaborate on projects</p>
-              </div>
-            )}
           </div>
 
           {/* Liked Projects by Category */}
