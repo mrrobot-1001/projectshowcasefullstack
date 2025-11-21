@@ -58,11 +58,7 @@ export default function WinnersPage() {
         ) : (
           <div className="space-y-4 sm:space-y-6 md:space-y-8">
             {CATEGORIES.map(category => {
-              const firstPlace = winners.find(w => w.category === category && w.position === 1)
-              const secondPlace = winners.find(w => w.category === category && w.position === 2)
-              const thirdPlace = winners.find(w => w.category === category && w.position === 3)
-              const hasWinners = firstPlace || secondPlace || thirdPlace
-              
+              const categoryWinner = winners.find(w => w.category === category)
               return (
                 <div key={category} className="bg-white border-3 sm:border-4 border-black p-4 sm:p-6 md:p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
@@ -72,62 +68,20 @@ export default function WinnersPage() {
                     </span>
                   </div>
                   
-                  {hasWinners ? (
-                    <div className="space-y-3 sm:space-y-4">
-                      {/* 1st Place */}
-                      {firstPlace && (
-                        <div className="bg-gradient-to-r from-[#ffd93d] to-[#ffc107] border-3 sm:border-4 border-black p-4 sm:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <span className="text-4xl sm:text-5xl md:text-6xl">🥇</span>
-                              <Trophy size={32} strokeWidth={3} className="sm:w-12 sm:h-12 md:w-14 md:h-14" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs sm:text-sm font-black uppercase mb-1 sm:mb-2">1st Place Winner</p>
-                              <h3 className="text-2xl sm:text-3xl md:text-4xl font-black break-words">{firstPlace.team_name}</h3>
-                              {firstPlace.score && (
-                                <p className="text-base sm:text-lg font-bold mt-1 sm:mt-2">Score: {firstPlace.score}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 2nd Place */}
-                      {secondPlace && (
-                        <div className="bg-gradient-to-r from-[#c0c0c0] to-[#a8a8a8] border-3 sm:border-4 border-black p-4 sm:p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                            <span className="text-3xl sm:text-4xl md:text-5xl">🥈</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs sm:text-sm font-black uppercase mb-1">2nd Place</p>
-                              <h3 className="text-xl sm:text-2xl md:text-3xl font-black break-words">{secondPlace.team_name}</h3>
-                              {secondPlace.score && (
-                                <p className="text-sm sm:text-base font-bold mt-1">Score: {secondPlace.score}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 3rd Place */}
-                      {thirdPlace && (
-                        <div className="bg-gradient-to-r from-[#cd7f32] to-[#b8732d] border-3 sm:border-4 border-black p-4 sm:p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                            <span className="text-3xl sm:text-4xl md:text-5xl">🥉</span>
-                            <div className="flex-1 min-w-0 text-white">
-                              <p className="text-xs sm:text-sm font-black uppercase mb-1">3rd Place</p>
-                              <h3 className="text-xl sm:text-2xl md:text-3xl font-black break-words">{thirdPlace.team_name}</h3>
-                              {thirdPlace.score && (
-                                <p className="text-sm sm:text-base font-bold mt-1">Score: {thirdPlace.score}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                  {categoryWinner ? (
+                    <div className="bg-[#ffd93d] border-3 sm:border-4 border-black p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                      <Trophy size={40} strokeWidth={3} className="sm:w-14 sm:h-14 md:w-16 md:h-16 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs sm:text-sm font-black uppercase mb-1 sm:mb-2">Winner</p>
+                        <h3 className="text-2xl sm:text-3xl md:text-4xl font-black break-words">{categoryWinner.team_name}</h3>
+                        {categoryWinner.score && (
+                          <p className="text-lg sm:text-xl font-bold mt-2">Score: {categoryWinner.score}</p>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 sm:py-10 text-gray-400">
-                      <p className="text-lg sm:text-xl font-black">No winners announced yet</p>
+                      <p className="text-lg sm:text-xl font-black">No winner announced yet</p>
                     </div>
                   )}
                 </div>
