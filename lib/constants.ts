@@ -3,8 +3,9 @@ export const CATEGORIES = [
   'Clubs and Chapter',
   'AI/ML',
   'Cybersecurity and Blockchain',
-  'Open Innovation',
-  'Software and Automation'
+  'SEAS',
+  'Software and Automation',
+  'Open Innovation'
 ] as const
 
 export type Category = typeof CATEGORIES[number]

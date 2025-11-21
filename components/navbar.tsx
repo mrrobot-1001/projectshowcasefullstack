@@ -116,7 +116,7 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <button
+                  {/* <button
                     onClick={() => navigate('/login')}
                     className="px-5 py-2 text-sm font-bold border-3 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                   >
@@ -127,7 +127,7 @@ export function Navbar() {
                     className="px-5 py-2 text-sm font-black border-3 border-black bg-[#ff6b9d] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                   >
                     SIGN UP
-                  </button>
+                  </button> */}
                 </>
               )}
             </div>
