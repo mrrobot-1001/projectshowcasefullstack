@@ -8,7 +8,7 @@ const CATEGORY_COLORS = [
   { name: 'Clubs and Chapter', color: 'bg-[#3b82f6]' },
   { name: 'AI/ML', color: 'bg-[#ec4899]' },
   { name: 'Cybersecurity and Blockchain', color: 'bg-[#6366f1]' },
-  { name: 'Open Innovation', color: 'bg-[#10b981]' },
+  { name: 'SEAS', color: 'bg-[#10b981]' },
   { name: 'Software and Automation', color: 'bg-[#f59e0b]' }
 ]
 
