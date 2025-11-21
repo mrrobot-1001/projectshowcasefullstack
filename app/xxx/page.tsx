@@ -895,6 +895,122 @@ export default function SecretAdminPage() {
                   </div>
                 </div>
 
+                {/* Unjudged Projects Tracker */}
+                {(() => {
+                  // Get all projects by category
+                  const categorizedProjects = projects.reduce((acc: any, project: any) => {
+                    if (!acc[project.category]) {
+                      acc[project.category] = []
+                    }
+                    acc[project.category].push(project)
+                    return acc
+                  }, {})
+
+                  // Find projects that haven't been judged
+                  const unjudgedByCategory: any = {}
+                  Object.keys(categorizedProjects).forEach(category => {
+                    const categoryProjects = categorizedProjects[category]
+                    const unjudged = categoryProjects.filter((project: any) => {
+                      const hasScores = scores.some((score: any) => score.project_id === project.id)
+                      return !hasScores
+                    })
+                    if (unjudged.length > 0) {
+                      unjudgedByCategory[category] = unjudged
+                    }
+                  })
+
+                  const totalUnjudged = Object.values(unjudgedByCategory).reduce((sum: number, arr: any) => sum + arr.length, 0)
+
+                  return (
+                    <div className="bg-gradient-to-br from-[#ff6b9d] to-[#f50057] border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-white border-3 border-black p-3">
+                            <p className="text-4xl">⚠️</p>
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-black uppercase text-white">Unjudged Projects Tracker</h3>
+                            <p className="text-white/90 font-bold">Projects that haven't received any scores yet</p>
+                          </div>
+                        </div>
+                        <div className="bg-white border-3 border-black px-6 py-4 text-center">
+                          <p className="text-xs font-black uppercase">Total Unjudged</p>
+                          <p className="text-5xl font-black text-[#ff6b9d]">{totalUnjudged}</p>
+                          <p className="text-xs font-bold text-gray-600">out of {projects.length}</p>
+                        </div>
+                      </div>
+
+                      {totalUnjudged === 0 ? (
+                        <div className="bg-white border-4 border-black p-8 text-center">
+                          <p className="text-3xl mb-2">🎉</p>
+                          <p className="text-2xl font-black uppercase mb-2">All Projects Judged!</p>
+                          <p className="font-bold text-gray-600">Every project has received at least one score</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {Object.entries(unjudgedByCategory).map(([category, unjudgedProjects]: [string, any]) => (
+                            <div key={category} className="bg-white border-4 border-black p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                              <div className="flex items-center justify-between mb-4">
+                                <h4 className="text-xl font-black uppercase">{category}</h4>
+                                <div className="flex items-center gap-2">
+                                  <span className="bg-[#ff6b9d] text-white border-2 border-black px-3 py-1 font-black text-sm">
+                                    {unjudgedProjects.length} Unjudged
+                                  </span>
+                                  <span className="bg-[#c7f464] border-2 border-black px-3 py-1 font-black text-sm">
+                                    {categorizedProjects[category].length} Total
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                {unjudgedProjects.map((project: any) => (
+                                  <div 
+                                    key={project.id} 
+                                    className="bg-[#fef6e4] border-2 border-black p-4 flex items-center justify-between hover:bg-[#fff9e5] transition-colors"
+                                  >
+                                    <div className="flex-1">
+                                      <p className="font-black text-lg mb-1">{project.team_name}</p>
+                                      <p className="text-sm font-bold text-gray-700 mb-1">{project.title}</p>
+                                      <p className="text-xs text-gray-600 font-mono">ID: {project.id}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="bg-[#ffd93d] border-2 border-black px-3 py-2 font-black text-xs">
+                                        ❤️ {project.likes_count} Likes
+                                      </span>
+                                      <div className="bg-[#ff6b9d] text-white border-2 border-black px-4 py-2">
+                                        <p className="text-xs font-black uppercase text-center">Judges</p>
+                                        <p className="text-2xl font-black text-center">0</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              
+                              {/* Progress Bar */}
+                              <div className="mt-4 pt-4 border-t-2 border-black">
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-sm font-black uppercase">Category Progress</p>
+                                  <p className="text-sm font-black">
+                                    {((categorizedProjects[category].length - unjudgedProjects.length) / categorizedProjects[category].length * 100).toFixed(0)}% Complete
+                                  </p>
+                                </div>
+                                <div className="w-full bg-gray-200 border-2 border-black h-6">
+                                  <div 
+                                    className="bg-[#c7f464] border-r-2 border-black h-full transition-all duration-300"
+                                    style={{ 
+                                      width: `${((categorizedProjects[category].length - unjudgedProjects.length) / categorizedProjects[category].length * 100)}%` 
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+
                 {/* Rankings Section */}
                 {(() => {
                   // Calculate cumulative scores for all projects
