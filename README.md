@@ -1,163 +1,160 @@
-# Project Showcase Portal - Full Stack
+<div align="center">
 
-A complete project showcase portal for Bennett University with full backend integration using Next.js and Supabase.
+<img src="docs/screenshots/banner.jpg" alt="Project Showcase: projects grid on desktop with mobile home and leaderboard" width="100%">
 
-## 🚀 Quick Start
+# Project Showcase
 
-**Get started in 3 steps:**
+**A full-stack platform for a university project showcase: teams submit projects, students vote, judges score, and admins announce winners.**
 
-1. **Setup Supabase** - Follow `QUICKSTART.md` (10 minutes)
-2. **Configure Environment** - Update `.env.local` with your keys (1 minute)
-3. **Run Locally** - `npm install && npm run dev` (2 minutes)
+[![Live demo](https://img.shields.io/badge/Live_demo-showcase.kiraserver.live-f50057?style=for-the-badge&logo=googlechrome&logoColor=white)](https://showcase.kiraserver.live)
 
-📖 **Read [QUICKSTART.md](./QUICKSTART.md) to get started!**
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232a?logo=react&logoColor=61dafb)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169e1?logo=postgresql&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06b6d4?logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ed?logo=docker&logoColor=white)
 
-## ⚠️ IMPORTANT: Email Configuration
+</div>
 
-This project uses **immediate signup without email verification**.
+Built for the Student Cabinet of the School of CSET, Bennett University, where it ran a showcase of 139 student teams. Sign-up is limited to university email addresses.
 
-**You MUST disable email confirmations in Supabase:**
-- Go to Supabase Dashboard → Authentication → Settings → Email Auth
-- **UNCHECK** "Enable email confirmations"
-- Save changes
+## Try it
 
-**If you don't do this, signup will send verification emails and users cannot login!**
+Open **[showcase.kiraserver.live](https://showcase.kiraserver.live)**: browsing, the leaderboard and winners are public. To vote or submit, use a demo account (tap it on the login page):
 
-See [EMAIL_SETUP_INFO.md](./EMAIL_SETUP_INFO.md) for details.
+| Role | Where | Email | Password |
+|---|---|---|---|
+| Student (voter) | [Login](https://showcase.kiraserver.live/login) | `demo.student@bennett.edu.in` | `Demo@1234` |
+| Team leader | [Login](https://showcase.kiraserver.live/login) | `demo.leader@bennett.edu.in` | `Demo@1234` |
+| Judge | [Judge login](https://showcase.kiraserver.live/guest-login) | `demo.judge@bennett.edu.in` | `Judge@1234` |
 
-## 📚 Documentation
+The admin panel (`/admin`) is not part of the public demo.
 
-- **[QUICKSTART.md](./QUICKSTART.md)** - Get started in 3 steps (START HERE!)
-- **[UI_OVERHAUL_SUMMARY.md](./UI_OVERHAUL_SUMMARY.md)** - 🎨 Latest UI changes and new features
-- **[VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md)** - ⚡ Fix deployment errors - Environment variables setup
-- **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Detailed database setup
-- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment guide
-- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - What was built
-- **[EMAIL_SETUP_INFO.md](./EMAIL_SETUP_INFO.md)** - Email configuration details
+## Features
 
-## ✨ Features
+**For students**
+- Browse projects with search and category filters; open any project for details, tags and links
+- Vote for up to **two projects per category** (enforced server-side in a locked transaction)
+- Live leaderboard, overall or per category, and a winners page
 
-- ✅ User signup with @bennett.edu.in validation (no email verification)
-- ✅ Team creation with unique codes
-- ✅ Project upload with image storage
-- ✅ Voting system (max 2 likes per category)
-- ✅ User profile with liked projects by category
-- ✅ Auto-updating leaderboard
-- ✅ Admin dashboard with stats
-- ✅ Manual leaderboard manipulation
-- ✅ Project detail pages
-- ✅ Protected routes
-- ✅ Full authentication flow
-- ✅ Clean, minimal UI design
+**For teams**
+- Sign up as a team leader and get a unique team code to share with teammates
+- Submit a project with a cover image, tags, GitHub and demo links
+- Manage team members and edit or delete the team's own projects
 
-## 🛠️ Tech Stack
+**For judges**
+- Separate judge login and panel listing every project by category
+- Score six criteria from 0 to 10 (innovation, pitching, presentation, creativity, functionality, scalability)
+- Scores are tied to the signed-in judge on the server, and each judge sees only their own
 
-- **Frontend**: Next.js 16, React 19, TailwindCSS
-- **Backend**: Next.js API Routes
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth
-- **Storage**: Supabase Storage
-- **Deployment**: Vercel
+**For admins** (`/admin`, behind its own login)
+- Dashboard stats; manage teams, users and projects
+- Results ranked by average judge score per category, with a tracker for projects still unjudged
+- Announce 1st / 2nd / 3rd place per category
+- Vote moderation (Likes control), with an **audit log** of every admin change shown in the panel
 
-## 🔐 Admin Access
+## Screenshots
 
-**Default Credentials:**
-- Email: `admin@bennett.edu.in`
-- Password: Set in `.env.local`
+<img src="docs/screenshots/desktop-projects.jpg" alt="All projects" width="100%">
 
-**Capabilities:**
-- View all statistics
-- See all teams and team codes
-- View all projects with IDs
-- Manually adjust leaderboard
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/desktop-leaderboard.jpg" alt="Leaderboard"></td>
+    <td width="50%"><img src="docs/screenshots/desktop-project.jpg" alt="Project details"></td>
+  </tr>
+  <tr align="center"><td>Leaderboard</td><td>Project details</td></tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/desktop-judge.jpg" alt="Judge panel"></td>
+    <td width="50%"><img src="docs/screenshots/desktop-admin.jpg" alt="Admin panel"></td>
+  </tr>
+  <tr align="center"><td>Judge panel</td><td>Admin panel</td></tr>
+</table>
 
-## 📋 User Features
+<table>
+  <tr>
+    <td><img src="docs/screenshots/mobile-home.jpg" alt="Home on mobile"></td>
+    <td><img src="docs/screenshots/mobile-projects.jpg" alt="Projects on mobile"></td>
+    <td><img src="docs/screenshots/mobile-leaderboard.jpg" alt="Leaderboard on mobile"></td>
+    <td><img src="docs/screenshots/mobile-project.jpg" alt="Project on mobile"></td>
+  </tr>
+</table>
 
-1. **Sign up** with Bennett email (instant access)
-2. **Create team** and get unique code (TEAM-XXXXXXXX)
-3. **Upload projects** with images
-4. **Vote** for favorites (max 2 per category)
-5. **View** detailed project pages
-6. **Track** leaderboard rankings
+## Tech stack
 
-## 🌐 Deployment
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router, `proxy.ts` route guards, standalone output), React 19, TypeScript |
+| UI | Tailwind CSS 4, Radix UI primitives, neo-brutalist design system |
+| Data | PostgreSQL 16 with plain parameterized SQL ([`postgres`](https://github.com/porsager/postgres)); schema in [`db/schema.sql`](db/schema.sql) |
+| Auth | Separate JWT session cookies for students, judges and admin (`httpOnly`, `Secure`, `SameSite=Lax`, signed with jose); bcrypt password hashes |
+| Hosting | Docker Compose on a self-managed Ubuntu server, Caddy reverse proxy, Cloudflare Tunnel (TLS at the edge) |
 
-Deploy to Vercel in ~15 minutes:
+## Architecture
+
+```mermaid
+flowchart LR
+    U[Students / judges / admin] -->|HTTPS| CF[Cloudflare edge]
+    CF -->|Tunnel| C[Caddy]
+    C -->|/uploads/*| FS[(Project images)]
+    C -->|everything else| N[Next.js server]
+    N -->|SQL| DB[(PostgreSQL)]
+    M[migrate + seed job] -->|db/schema.sql| DB
+```
+
+- `proxy.ts` redirects signed-out visitors away from `/admin` and `/upload`; every API route checks the session again on the server.
+- A one-shot job applies the idempotent schema (and demo data) before the app container starts.
+- Uploaded images are served by Caddy: only image extensions, with `X-Content-Type-Options: nosniff`.
+
+## Security
+
+- **Three roles, three sessions**: student, judge and admin sessions are separate signed cookies; admin credentials live only in the server environment.
+- **Least privilege per route**: admin APIs require the admin session; scores require a judge session and ignore any judge id sent by the client; teams can edit only their own projects and never their vote count.
+- **Audited moderation**: every admin change to votes, teams, users, projects and winners is written to `admin_audit_log` with before/after values.
+- **Upload hardening**: the image format is detected from the file's bytes, which also sets the stored extension.
+- **Rate limits** on every login and sign-up endpoint and on the leaderboard and winners APIs, keyed on Cloudflare's `CF-Connecting-IP`.
+- Brute-force protection on the admin login (5 attempts per 15 minutes).
+
+## Getting started
+
+**Prerequisites:** Node.js 20+ and PostgreSQL 16.
 
 ```bash
-# Install dependencies (use npm, not pnpm)
-npm install --legacy-peer-deps
+git clone https://github.com/mrrobot-1001/projectshowcasefullstack.git
+cd projectshowcasefullstack
+npm install
 
-# Push to GitHub
-git add .
-git commit -m "Deploy project showcase"
-git push origin main
+cp .env.local.example .env.local   # set DATABASE_URL, SESSION_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
+set -a; . ./.env.local; set +a
 
-# Import to Vercel and add environment variables
-# See DEPLOYMENT_GUIDE.md for details
+node scripts/migrate.mjs           # create / update tables (safe to re-run)
+node scripts/seed-demo.mjs         # optional demo teams, projects and accounts
+npm run dev                        # http://localhost:3000
 ```
 
-**Note:** This project uses npm. If you encounter deployment issues, see [VERCEL_DEPLOYMENT_FIX.md](./VERCEL_DEPLOYMENT_FIX.md).
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SESSION_SECRET` | 32+ random characters for signing sessions (`openssl rand -hex 32`) |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Admin login for `/admin/login` |
 
-## 🔧 Environment Variables
+## Deployment
 
-Required in `.env.local`:
+The [`Dockerfile`](Dockerfile) builds a slim `runner` image (Next.js standalone, non-root user) and a `builder` image that runs the schema and seed scripts. A Compose stack of `db` → `migrate` → `app` with a volume on `public/uploads` is all that's needed; see [docs/self-hosting.md](docs/self-hosting.md).
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_key
-ADMIN_EMAIL=admin@bennett.edu.in
-ADMIN_PASSWORD=your_secure_password
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-## 📖 API Routes
-
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/login` - Login (user/admin)
-- `GET /api/projects` - List projects
-- `POST /api/projects` - Upload project
-- `POST /api/likes` - Like/unlike project
-- `GET /api/leaderboard` - Get rankings
-- `POST /api/leaderboard` - Admin: update likes
-- `GET /api/admin/*` - Admin endpoints
-
-## 🗄️ Database Schema
-
-4 main tables:
-- `users` - User profiles
-- `teams` - Team management with codes
-- `projects` - Project submissions
-- `likes` - Voting system
-
-See `SUPABASE_SETUP.md` for complete schema.
-
-## 🎯 Project Structure
+## Project structure
 
 ```
-├── app/
-│   ├── api/              # API routes
-│   ├── signup/           # Signup page
-│   ├── login/            # Login page
-│   ├── upload/           # Upload project (protected)
-│   ├── projects/         # Browse & detail pages
-│   ├── leaderboard/      # Rankings
-│   └── admin/            # Admin dashboard (protected)
-├── lib/
-│   ├── supabase/         # Supabase clients
-│   └── types.ts          # TypeScript types
-└── components/           # UI components
+app/                     pages (home, projects, leaderboard, winners, team, upload, judge, admin, …)
+app/api/                 route handlers (auth, projects, likes, scores, winners, teams, admin/*)
+components/              navbar, project cards, filters, UI primitives
+db/schema.sql            PostgreSQL schema
+lib/                     db client, sessions & auth, audit log, uploads, rate limiter, email validation
+proxy.ts                 page guards for /admin and /upload
+scripts/                 migrate.mjs, seed-demo.mjs
+docs/                    self-hosting, email validation rules, performance notes, screenshots
 ```
-
-## 🤝 Contributing
-
-This is a complete full-stack implementation ready for deployment.
-
-## 📄 License
-
-MIT
 
 ---
 
-**Ready to deploy?** Start with [QUICKSTART.md](./QUICKSTART.md) 🚀
+Built by **Harsh Rana** · [@mrrobot-1001](https://github.com/mrrobot-1001)

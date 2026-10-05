@@ -176,4 +176,4 @@
 3. **Service Worker**: Add offline support
 4. **Prefetching**: Prefetch likely navigation targets
 5. **CDN**: Use CDN for static assets
-6. **Database Indexes**: Ensure proper indexing on Supabase
+6. **Database Indexes**: Indexes are defined in `db/schema.sql`
