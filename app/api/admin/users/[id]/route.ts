@@ -1,84 +1,55 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { requireAdmin, errorResponse } from '@/lib/auth'
+import { logAdminAction } from '@/lib/audit'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+type Params = { params: Promise<{ id: string }> }
+const EDITABLE = ['name', 'email', 'phone_number', 'enrollment_number', 'is_team_leader', 'team_id']
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: Request, { params }: Params) {
   try {
+    const admin = await requireAdmin()
     const { id } = await params
-    const updates = await request.json()
-    
-    console.log('Updating user:', id, updates)
-    
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error updating user:', error)
-      throw error
+    const body = await request.json()
+    const updates: Record<string, any> = Object.fromEntries(Object.entries(body).filter(([k]) => EDITABLE.includes(k)))
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
     }
+    if (typeof updates.email === 'string') updates.email = updates.email.trim().toLowerCase()
 
-    console.log('User updated successfully:', data)
-    return NextResponse.json({ user: data })
+    const [user] = await sql`
+      UPDATE users SET ${sql(updates)} WHERE id = ${id}
+      RETURNING id, email, name, phone_number, enrollment_number, is_team_leader, team_id, created_at
+    `
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+    await logAdminAction(admin.email, 'update_user', 'user', id, { fields: Object.keys(updates) })
+    return NextResponse.json({ user })
   } catch (error) {
-    console.error('Error updating user:', error)
-    return NextResponse.json(
-      { error: 'Failed to update user' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'Admin user update error')
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// Deletes the user; their likes go with them, and project counts are corrected.
+export async function DELETE(_request: Request, { params }: Params) {
   try {
+    const admin = await requireAdmin()
     const { id } = await params
-    
-    console.log('Attempting to delete user:', id)
-    
-    // First, delete all likes made by this user
-    console.log('Deleting likes by user:', id)
-    const { error: likesError } = await supabase
-      .from('likes')
-      .delete()
-      .eq('user_id', id)
 
-    if (likesError) {
-      console.error('Error deleting user likes:', likesError)
-      // Continue anyway
-    }
+    const deleted = await sql.begin(async tx => {
+      const liked = await tx`SELECT project_id FROM likes WHERE user_id = ${id}`
+      const [user] = await tx`DELETE FROM users WHERE id = ${id} RETURNING email`
+      if (user && liked.length) {
+        const ids = liked.map(l => l.project_id)
+        await tx`UPDATE projects SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = ANY(${ids})`
+      }
+      return user
+    })
+    if (!deleted) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // Delete the user from auth (this will cascade to users table if set up properly)
-    console.log('Deleting user from database:', id)
-    const { error: userError } = await supabase
-      .from('users')
-      .delete()
-      .eq('id', id)
-
-    if (userError) {
-      console.error('Error deleting user:', userError)
-      throw userError
-    }
-
-    console.log('User deleted successfully:', id)
+    await logAdminAction(admin.email, 'delete_user', 'user', id, { email: deleted.email })
     return NextResponse.json({ success: true, message: 'User deleted successfully' })
   } catch (error) {
-    console.error('Error deleting user:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete user' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'Admin user delete error')
   }
 }

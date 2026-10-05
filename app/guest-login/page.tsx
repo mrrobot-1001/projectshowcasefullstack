@@ -128,6 +128,17 @@ export default function GuestLoginPage() {
             </Button>
           </form>
 
+          {/* Demo judge */}
+          <button
+            type="button"
+            onClick={() => { setEmail('demo.judge@bennett.edu.in'); setPassword('Judge@1234') }}
+            className="mt-6 w-full min-w-0 text-left border-3 border-black bg-[#fff9e5] p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+          >
+            <span className="block text-xs font-black uppercase">Demo judge · tap to fill</span>
+            <span className="block truncate text-sm font-bold">demo.judge@bennett.edu.in</span>
+            <span className="block text-sm font-bold">Password: Judge@1234</span>
+          </button>
+
           {/* Info */}
           <div className="mt-8 p-4 bg-[#fef6e4] border-3 border-black">
             <p className="text-xs font-bold text-center">

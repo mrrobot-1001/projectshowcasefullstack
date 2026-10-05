@@ -15,12 +15,12 @@ export interface RateLimitConfig {
 
 export function rateLimit(identifier: string, config: RateLimitConfig): boolean {
   const now = Date.now()
-  const record = store[identifier]
 
   // Clean up old entries
-  if (record && now > record.resetTime) {
+  if (store[identifier] && now > store[identifier].resetTime) {
     delete store[identifier]
   }
+  const record = store[identifier]
 
   // Check if limit exceeded
   if (record && record.count >= config.maxRequests) {
@@ -49,3 +49,12 @@ setInterval(() => {
     }
   })
 }, 60000) // Clean every minute
+
+// Behind Cloudflare, CF-Connecting-IP is set by Cloudflare and can't be forged
+// by the client; the first X-Forwarded-For entry can, so it is never the key.
+export function clientIp(request: Request): string {
+  const cf = request.headers.get('cf-connecting-ip')
+  if (cf) return cf.trim()
+  const hops = (request.headers.get('x-forwarded-for') || '').split(',').map(h => h.trim()).filter(Boolean)
+  return hops[hops.length - 1] || 'anonymous'
+}

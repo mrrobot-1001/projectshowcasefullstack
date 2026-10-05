@@ -1,105 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { requireAdmin, errorResponse } from '@/lib/auth'
+import { logAdminAction } from '@/lib/audit'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+type Params = { params: Promise<{ id: string }> }
+const EDITABLE = ['team_name', 'leader_name', 'leader_email', 'members', 'unique_team_code']
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: Request, { params }: Params) {
   try {
+    const admin = await requireAdmin()
     const { id } = await params
-    const updates = await request.json()
-    
-    console.log('Updating team:', id, updates)
-    
-    const { data, error } = await supabase
-      .from('teams')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error updating team:', error)
-      throw error
+    const body = await request.json()
+    const updates: Record<string, any> = Object.fromEntries(Object.entries(body).filter(([k]) => EDITABLE.includes(k)))
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
     }
+    if ('members' in updates) updates.members = sql.json(Array.isArray(updates.members) ? updates.members : [])
 
-    console.log('Team updated successfully:', data)
-    return NextResponse.json({ team: data })
+    const team = await sql.begin(async tx => {
+      const [row] = await tx`UPDATE teams SET ${tx(updates)} WHERE id = ${id} RETURNING *`
+      // Projects carry a copy of the team name for listings
+      if (row && 'team_name' in updates) {
+        await tx`UPDATE projects SET team_name = ${row.team_name} WHERE team_id = ${id}`
+      }
+      return row
+    })
+    if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 })
+
+    await logAdminAction(admin.email, 'update_team', 'team', id, { fields: Object.keys(updates) })
+    return NextResponse.json({ team })
   } catch (error) {
-    console.error('Error updating team:', error)
-    return NextResponse.json(
-      { error: 'Failed to update team' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'Admin team update error')
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// Deletes the team and (via cascade) its projects, their likes and scores.
+export async function DELETE(_request: Request, { params }: Params) {
   try {
+    const admin = await requireAdmin()
     const { id } = await params
-    
-    console.log('Attempting to delete team:', id)
-    
-    // First, delete all likes associated with projects of this team
-    const { data: teamProjects } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('team_id', id)
-    
-    if (teamProjects && teamProjects.length > 0) {
-      const projectIds = teamProjects.map(p => p.id)
-      console.log('Deleting likes for projects:', projectIds)
-      
-      const { error: likesError } = await supabase
-        .from('likes')
-        .delete()
-        .in('project_id', projectIds)
-      
-      if (likesError) {
-        console.error('Error deleting likes:', likesError)
-        // Continue anyway
-      }
-    }
-    
-    // Then delete all projects associated with this team
-    console.log('Deleting projects for team:', id)
-    const { error: projectsError } = await supabase
-      .from('projects')
-      .delete()
-      .eq('team_id', id)
+    const [team] = await sql`DELETE FROM teams WHERE id = ${id} RETURNING team_name`
+    if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 })
 
-    if (projectsError) {
-      console.error('Error deleting projects:', projectsError)
-      throw projectsError
-    }
-
-    // Finally delete the team
-    console.log('Deleting team:', id)
-    const { error: teamError } = await supabase
-      .from('teams')
-      .delete()
-      .eq('id', id)
-
-    if (teamError) {
-      console.error('Error deleting team:', teamError)
-      throw teamError
-    }
-
-    console.log('Team deleted successfully:', id)
+    await logAdminAction(admin.email, 'delete_team', 'team', id, { team_name: team.team_name })
     return NextResponse.json({ success: true, message: 'Team deleted successfully' })
   } catch (error) {
-    console.error('Error deleting team:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete team' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'Admin team delete error')
   }
 }

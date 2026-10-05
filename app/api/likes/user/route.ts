@@ -1,56 +1,28 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { requireUser, errorResponse } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const supabase = await createClient()
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireUser()
 
-    // Get all likes by this user with project details in one query
-    const { data: likes, error } = await supabase
-      .from('likes')
-      .select(`
-        id,
-        category,
-        created_at,
-        project:projects(
-          id,
-          title,
-          description,
-          image_url,
-          likes_count,
-          category
-        )
-      `)
-      .eq('user_id', user.id)
-      .limit(50) // Limit for performance
+    const likes = await sql`
+      SELECT l.id, l.category, l.created_at,
+             jsonb_build_object(
+               'id', p.id, 'title', p.title, 'description', p.description,
+               'image_url', p.image_url, 'likes_count', p.likes_count, 'category', p.category
+             ) AS project
+      FROM likes l
+      JOIN projects p ON p.id = l.project_id
+      WHERE l.user_id = ${user.sub}
+      ORDER BY l.created_at DESC
+      LIMIT 50
+    `
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-
-    // Flatten the data structure
-    const formattedLikes = (likes || []).map((like: any) => ({
-      id: like.id,
-      category: like.category,
-      created_at: like.created_at,
-      project: like.project
-    }))
-
-    return NextResponse.json(formattedLikes, {
-      headers: {
-        'Cache-Control': 'private, max-age=5, stale-while-revalidate=10'
-      }
+    return NextResponse.json(likes, {
+      headers: { 'Cache-Control': 'private, max-age=5, stale-while-revalidate=10' },
     })
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'User likes error')
   }
 }

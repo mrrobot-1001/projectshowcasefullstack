@@ -1,131 +1,68 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { sql } from '@/lib/db'
+import { requireUser, errorResponse } from '@/lib/auth'
 import { isValidBennettEmail, getBennettEmailError } from '@/lib/email-validation'
 
+// The current user's team (by team_id, or by appearing in a team's member list).
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const user = await requireUser()
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user profile to find team_id and email
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('team_id, is_team_leader, email')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError) {
+    const [profile] = await sql`SELECT team_id, is_team_leader, email FROM users WHERE id = ${user.sub}`
+    if (!profile) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    let team = null
-
-    // If user has a team_id, get that team
-    if (profile?.team_id) {
-      const { data: teamData, error: teamError } = await supabase
-        .from('teams')
-        .select('*, projects(*)')
-        .eq('id', profile.team_id)
-        .single()
-
-      if (!teamError) {
-        team = teamData
-      }
-    }
-
-    // If no team found via team_id, search teams where user's email matches a member
-    if (!team && profile?.email) {
-      const { data: allTeams, error: teamsError } = await supabase
-        .from('teams')
-        .select('*, projects(*)')
-
-      if (!teamsError && allTeams) {
-        // Find team where user's email matches any member
-        team = allTeams.find((t: any) => 
-          t.members?.some((m: any) => 
-            m.email?.toLowerCase() === profile.email?.toLowerCase()
-          )
-        )
-      }
-    }
-
+    const [team] = await sql`
+      SELECT t.*,
+             COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.created_at) FROM projects p WHERE p.team_id = t.id), '[]') AS projects
+      FROM teams t
+      WHERE t.id = ${profile.team_id}
+         OR EXISTS (SELECT 1 FROM jsonb_array_elements(t.members) m
+                    WHERE lower(m->>'email') = lower(${profile.email}))
+      ORDER BY (t.id = ${profile.team_id}) DESC NULLS LAST
+      LIMIT 1
+    `
     if (!team) {
       return NextResponse.json({ error: 'No team found' }, { status: 404 })
     }
 
-    // Add user role info
-    return NextResponse.json({
-      ...team,
-      isTeamLeader: profile.is_team_leader
-    }, {
-      headers: {
-        'Cache-Control': 'private, max-age=5, stale-while-revalidate=10'
-      }
-    })
+    return NextResponse.json(
+      { ...team, isTeamLeader: profile.is_team_leader },
+      { headers: { 'Cache-Control': 'private, max-age=5, stale-while-revalidate=10' } }
+    )
   } catch (error) {
-    console.error('Error in my-team endpoint:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return errorResponse(error, 'My team error')
   }
 }
 
+// Team leader updates the member list.
 export async function PATCH(request: Request) {
   try {
-    const supabase = await createClient()
+    const user = await requireUser()
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user profile to verify team leader status
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('team_id, is_team_leader')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile?.team_id) {
+    const [profile] = await sql`SELECT team_id, is_team_leader FROM users WHERE id = ${user.sub}`
+    if (!profile?.team_id) {
       return NextResponse.json({ error: 'No team found' }, { status: 404 })
     }
-
     if (!profile.is_team_leader) {
       return NextResponse.json({ error: 'Only team leaders can update team info' }, { status: 403 })
     }
 
-    const body = await request.json()
-    const { members } = body
-
-    // Validate all member emails
-    if (members && Array.isArray(members)) {
-      for (const member of members) {
-        if (!member.email || !isValidBennettEmail(member.email)) {
-          return NextResponse.json({ 
-            error: getBennettEmailError(member.email || 'invalid email') 
-          }, { status: 400 })
-        }
+    const { members } = await request.json()
+    if (!Array.isArray(members) || members.length > 10) {
+      return NextResponse.json({ error: 'members must be a list of up to 10 people' }, { status: 400 })
+    }
+    for (const member of members) {
+      if (!member?.email || !isValidBennettEmail(member.email)) {
+        return NextResponse.json({ error: getBennettEmailError(member?.email || 'invalid email') }, { status: 400 })
       }
     }
+    const clean = members.map((m: any) => ({ name: String(m.name ?? '').trim(), email: String(m.email).trim() }))
 
-    // Update team members
-    const { error: updateError } = await supabase
-      .from('teams')
-      .update({ members })
-      .eq('id', profile.team_id)
-
-    if (updateError) {
-      console.error('Error updating team:', updateError)
-      return NextResponse.json({ error: 'Failed to update team' }, { status: 500 })
-    }
-
+    await sql`UPDATE teams SET members = ${sql.json(clean)} WHERE id = ${profile.team_id}`
     return NextResponse.json({ success: true, message: 'Team members updated successfully' })
   } catch (error) {
-    console.error('Error in my-team PATCH:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return errorResponse(error, 'My team update error')
   }
 }

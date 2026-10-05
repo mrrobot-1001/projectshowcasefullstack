@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useUser } from '@/contexts/UserContext'
 
+const DEMO_ACCOUNTS = [
+  { label: 'Student (voter)', email: 'demo.student@bennett.edu.in', password: 'Demo@1234', color: 'bg-[#c7f464]' },
+  { label: 'Team leader', email: 'demo.leader@bennett.edu.in', password: 'Demo@1234', color: 'bg-[#ffd93d]' },
+]
+
 export default function LoginPage() {
   const router = useRouter()
   const { refreshUser } = useUser()
@@ -15,8 +20,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    signIn(email, password)
+  }
+
+  // Demo accounts sign in with one tap
+  const signInAsDemo = (demo: { email: string; password: string }) => {
+    setEmail(demo.email)
+    setPassword(demo.password)
+    signIn(demo.email, demo.password)
+  }
+
+  const signIn = async (email: string, password: string) => {
     setError('')
     setLoading(true)
 
@@ -36,12 +52,7 @@ export default function LoginPage() {
       // Refresh user context
       await refreshUser()
 
-      // Redirect based on role
-      if (data.isAdmin) {
-        router.push('/admin')
-      } else {
-        router.push('/')
-      }
+      router.push('/')
       router.refresh()
     } catch (err: any) {
       setError(err.message || 'An error occurred during login')
@@ -101,6 +112,7 @@ export default function LoginPage() {
                 placeholder="your.email@bennett.edu.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
               <p className="text-xs font-bold text-gray-600">
@@ -116,6 +128,7 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
               />
             </div>
@@ -130,6 +143,29 @@ export default function LoginPage() {
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
+
+          {/* Demo accounts */}
+          <div className="mt-8 border-3 border-black bg-[#fff9e5] p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <p className="text-xs font-black uppercase mb-3">Try a demo account</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {DEMO_ACCOUNTS.map(demo => (
+                <button
+                  key={demo.email}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => signInAsDemo(demo)}
+                  className={`min-w-0 text-left border-3 border-black p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-60 ${demo.color}`}
+                >
+                  <span className="block font-black uppercase text-sm">{demo.label}</span>
+                  <span className="block truncate text-xs font-bold">{demo.email}</span>
+                  <span className="block text-xs font-bold">Password: {demo.password}</span>
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs font-bold text-gray-700">
+              Tap one to sign in. Judges have a demo account on the Judge Login page.
+            </p>
+          </div>
 
           {/* Divider */}
           <div className="relative my-8">

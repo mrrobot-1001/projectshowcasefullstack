@@ -1,126 +1,70 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { hashPassword, errorResponse } from '@/lib/auth'
+import { generateTeamCode } from '@/lib/queries'
 import { isValidBennettEmail, getBennettEmailError } from '@/lib/email-validation'
+import { rateLimit, clientIp } from '@/lib/rate-limiter'
 
 export async function POST(request: Request) {
   try {
+    if (!rateLimit(`signup:${clientIp(request)}`, { interval: 60000, maxRequests: 10 })) {
+      return NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 })
+    }
+
     const { email, password, name, phone_number, participating, teamData } = await request.json()
 
-    // Validate Bennett email with centralized validation
     if (!isValidBennettEmail(email)) {
+      return NextResponse.json({ error: getBennettEmailError(email) }, { status: 400 })
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    }
+    if (typeof name !== 'string' || !name.trim()) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+    }
+
+    const normalizedEmail = email.trim().toLowerCase()
+    const [taken] = await sql`SELECT 1 FROM users WHERE email = ${normalizedEmail}`
+    if (taken) {
+      return NextResponse.json({ error: 'An account with this email already exists' }, { status: 400 })
+    }
+
+    const members = participating && Array.isArray(teamData?.members) ? teamData.members : []
+    const invalidMembers = members.filter((m: any) => m?.email && !isValidBennettEmail(m.email))
+    if (invalidMembers.length > 0) {
       return NextResponse.json(
-        { error: getBennettEmailError(email) },
+        {
+          error: `Invalid team member email(s): ${invalidMembers.map((m: any) => m.email).join(', ')}. Only Bennett University emails are allowed.`,
+        },
         { status: 400 }
       )
     }
+    if (participating && !teamData?.teamName?.trim()) {
+      return NextResponse.json({ error: 'Team name is required' }, { status: 400 })
+    }
 
-    const supabase = await createClient()
+    const passwordHash = await hashPassword(password)
 
-    // Sign up the user (without email confirmation)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/`,
-        data: {
-          name,
-          phone_number,
-        },
-      },
+    const result = await sql.begin(async tx => {
+      const [user] = await tx`
+        INSERT INTO users (email, password_hash, name, phone_number, is_team_leader)
+        VALUES (${normalizedEmail}, ${passwordHash}, ${name.trim()}, ${phone_number || null}, ${!!participating})
+        RETURNING id, email
+      `
+      if (!participating) return { user, teamId: null, teamCode: null }
+
+      const teamCode = generateTeamCode()
+      const [team] = await tx`
+        INSERT INTO teams (team_name, leader_id, leader_name, leader_email, members, unique_team_code)
+        VALUES (${teamData.teamName.trim()}, ${user.id}, ${name.trim()}, ${normalizedEmail}, ${tx.json(members)}, ${teamCode})
+        RETURNING id
+      `
+      await tx`UPDATE users SET team_id = ${team.id} WHERE id = ${user.id}`
+      return { user, teamId: team.id, teamCode }
     })
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 })
-    }
-
-    if (!authData.user) {
-      return NextResponse.json({ error: 'Failed to create user' }, { status: 400 })
-    }
-
-    // Use service role client to bypass RLS for user creation
-    const supabaseAdmin = await createServiceClient()
-
-    // Create user profile
-    const { error: profileError } = await supabaseAdmin.from('users').insert({
-      id: authData.user.id,
-      email,
-      name,
-      phone_number,
-      is_team_leader: participating || false,
-    })
-
-    if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 400 })
-    }
-
-    // If participating in showcase, create team
-    let teamId = null
-    let teamCode = null
-    if (participating && teamData) {
-      // Validate team member emails
-      if (teamData.members && Array.isArray(teamData.members)) {
-        const invalidMembers = teamData.members
-          .filter((member: any) => member.email) // Only check non-empty emails
-          .filter((member: any) => !isValidBennettEmail(member.email))
-        
-        if (invalidMembers.length > 0) {
-          return NextResponse.json(
-            { 
-              error: `Invalid team member email(s): ${invalidMembers.map((m: any) => m.email).join(', ')}. Only Bennett University emails are allowed.` 
-            },
-            { status: 400 }
-          )
-        }
-      }
-      
-      const uniqueCode = generateUniqueTeamCode()
-      teamCode = uniqueCode
-      
-      const { data: team, error: teamError } = await supabaseAdmin
-        .from('teams')
-        .insert({
-          team_name: teamData.teamName,
-          leader_id: authData.user.id,
-          leader_name: name,
-          leader_email: email,
-          members: teamData.members || [],
-          unique_team_code: uniqueCode,
-        })
-        .select()
-        .single()
-
-      if (teamError) {
-        return NextResponse.json({ error: teamError.message }, { status: 400 })
-      }
-
-      teamId = team.id
-
-      // Update user with team_id
-      await supabaseAdmin
-        .from('users')
-        .update({ team_id: teamId })
-        .eq('id', authData.user.id)
-    }
-
-    return NextResponse.json({
-      user: authData.user,
-      teamId,
-      teamCode,
-      message: 'Signup successful! You can now login.',
-    })
+    return NextResponse.json({ ...result, message: 'Signup successful! You can now login.' })
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'Signup error')
   }
-}
-
-function generateUniqueTeamCode(): string {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = 'TEAM-'
-  for (let i = 0; i < 8; i++) {
-    code += characters.charAt(Math.floor(Math.random() * characters.length))
-  }
-  return code
 }

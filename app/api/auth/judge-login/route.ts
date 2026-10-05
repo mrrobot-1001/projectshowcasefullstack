@@ -1,68 +1,35 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { startSession, verifyPassword, errorResponse } from '@/lib/auth'
+import { rateLimit, clientIp } from '@/lib/rate-limiter'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      )
+    if (!rateLimit(`judge-login:${clientIp(request)}`, { interval: 60000, maxRequests: 10 })) {
+      return NextResponse.json({ error: 'Too many login attempts. Please wait a minute.' }, { status: 429 })
     }
 
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      )
+    const { email, password } = await request.json()
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    // Verify judge credentials
-    const { data: judge, error } = await supabase
-      .from('judges')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .eq('is_active', true)
-      .single()
-
-    if (error || !judge) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      )
+    const [judge] = await sql`
+      SELECT id, name, email, password_hash FROM judges
+      WHERE email = ${email.trim().toLowerCase()} AND is_active
+    `
+    if (!judge || !(await verifyPassword(password, judge.password_hash))) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // Update last login
-    await supabase
-      .from('judges')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', judge.id)
+    await sql`UPDATE judges SET last_login = now() WHERE id = ${judge.id}`
+    await startSession({ sub: judge.id, role: 'judge', email: judge.email, name: judge.name })
 
     return NextResponse.json({
       success: true,
-      judge: {
-        id: judge.id,
-        name: judge.name,
-        email: judge.email
-      }
+      judge: { id: judge.id, name: judge.name, email: judge.email },
     })
   } catch (error) {
-    console.error('Error in judge login:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return errorResponse(error, 'Judge login error')
   }
 }

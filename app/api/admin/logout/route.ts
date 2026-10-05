@@ -3,9 +3,9 @@ import { endSession, errorResponse } from '@/lib/auth'
 
 export async function POST() {
   try {
-    await endSession('user')
-    return NextResponse.json({ message: 'Logged out successfully' })
+    await endSession('admin')
+    return NextResponse.json({ success: true })
   } catch (error) {
-    return errorResponse(error, 'Logout error')
+    return errorResponse(error, 'Admin logout error')
   }
 }

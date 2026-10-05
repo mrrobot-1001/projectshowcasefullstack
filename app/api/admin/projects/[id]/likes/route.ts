@@ -1,97 +1,47 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { requireAdmin, errorResponse } from '@/lib/auth'
+import { logAdminAction } from '@/lib/audit'
+import { clearCache } from '@/lib/cache'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Params = { params: Promise<{ id: string }> }
+
+// Admin nudges a project's like count up/down, or resets it to the real
+// number of votes. Every change is written to admin_audit_log.
+export async function PATCH(request: Request, { params }: Params) {
   try {
+    const admin = await requireAdmin()
     const { id } = await params
-    const body = await request.json()
-    const { action } = body // 'increase', 'decrease', or 'reset'
-
+    const { action } = await request.json()
     if (!['increase', 'decrease', 'reset'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
-    // Verify service role key exists
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      )
+    const [project] = await sql`
+      SELECT likes_count, original_likes_count,
+             (SELECT count(*)::int FROM likes l WHERE l.project_id = p.id) AS real_likes
+      FROM projects p WHERE id = ${id}
+    `
+    if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    if (action === 'decrease' && project.likes_count <= 0) {
+      return NextResponse.json({ error: 'Cannot decrease likes below 0' }, { status: 400 })
     }
 
-    // Use service role key to bypass RLS for admin operations
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    const newCount =
+      action === 'increase' ? project.likes_count + 1 :
+      action === 'decrease' ? project.likes_count - 1 :
+      project.real_likes
+    const original = action === 'reset' ? null : project.original_likes_count ?? project.likes_count
 
-    // Get current project
-    const { data: project, error: fetchError } = await supabase
-      .from('projects')
-      .select('likes_count, original_likes_count')
-      .eq('id', id)
-      .single()
+    await sql`
+      UPDATE projects SET likes_count = ${newCount}, original_likes_count = ${original}, updated_at = now()
+      WHERE id = ${id}
+    `
+    await logAdminAction(admin.email, `likes_${action}`, 'project', id, { from: project.likes_count, to: newCount })
+    clearCache()
 
-    if (fetchError || !project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
-    }
-
-    let newLikesCount: number
-    let originalLikesCount = project.original_likes_count
-
-    if (action === 'increase') {
-      newLikesCount = (project.likes_count || 0) + 1
-      // Store original likes count on first manipulation if not already stored
-      if (originalLikesCount === null || originalLikesCount === undefined) {
-        originalLikesCount = project.likes_count || 0
-      }
-    } else if (action === 'decrease') {
-      const currentLikes = project.likes_count || 0
-      if (currentLikes <= 0) {
-        return NextResponse.json({ 
-          error: 'Cannot decrease likes below 0' 
-        }, { status: 400 })
-      }
-      newLikesCount = currentLikes - 1
-      // Store original likes count on first manipulation if not already stored
-      if (originalLikesCount === null || originalLikesCount === undefined) {
-        originalLikesCount = project.likes_count || 0
-      }
-    } else { // reset
-      // Reset to original likes count
-      originalLikesCount = project.original_likes_count ?? project.likes_count ?? 0
-      newLikesCount = originalLikesCount
-    }
-
-    // Update the project
-    const { error: updateError } = await supabase
-      .from('projects')
-      .update({ 
-        likes_count: newLikesCount,
-        original_likes_count: originalLikesCount
-      })
-      .eq('id', id)
-
-    if (updateError) {
-      return NextResponse.json({ error: 'Failed to update likes' }, { status: 500 })
-    }
-
-    return NextResponse.json({
-      success: true,
-      likes_count: newLikesCount,
-      original_likes_count: originalLikesCount
-    })
+    return NextResponse.json({ success: true, likes_count: newCount, original_likes_count: original })
   } catch (error) {
-    console.error('Error manipulating likes:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return errorResponse(error, 'Admin likes error')
   }
 }

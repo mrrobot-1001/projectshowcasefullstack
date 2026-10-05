@@ -1,130 +1,59 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { rateLimit } from '@/lib/rate-limiter'
+import { sql } from '@/lib/db'
+import { requireAdmin, errorResponse } from '@/lib/auth'
+import { logAdminAction } from '@/lib/audit'
+import { rateLimit, clientIp } from '@/lib/rate-limiter'
 import { getCached, setCache, clearCache } from '@/lib/cache'
 
 export async function GET(request: Request) {
   try {
-    const clientIp = request.headers.get('x-forwarded-for') || 'anonymous'
-    
-    // Rate limiting: 30 requests per minute
-    if (!rateLimit(`winners:${clientIp}`, { interval: 60000, maxRequests: 30 })) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
-      )
+    if (!rateLimit(`winners:${clientIp(request)}`, { interval: 60000, maxRequests: 30 })) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
     }
 
-    // Check cache first (5 minute TTL for winners)
-    const cacheKey = 'winners:all'
-    const cached = getCached<any[]>(cacheKey)
+    const cached = getCached<any[]>('winners:all')
     if (cached) {
-      return NextResponse.json({ winners: cached }, {
-        headers: { 'X-Cache': 'HIT' }
-      })
+      return NextResponse.json({ winners: cached }, { headers: { 'X-Cache': 'HIT' } })
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const winners = await sql`SELECT * FROM winners ORDER BY category, position`
+    setCache('winners:all', winners, 300000)
 
-    const { data: winners, error } = await supabase
-      .from('winners')
-      .select('*')
-      .order('category')
-      .order('position')
-
-    if (error) {
-      // Table might not exist yet, return empty array
-      return NextResponse.json({ winners: [] })
-    }
-
-    // Cache for 5 minutes
-    setCache(cacheKey, winners || [], 300000)
-
-    return NextResponse.json({ winners: winners || [] }, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        'X-Cache': 'MISS'
-      }
+    return NextResponse.json({ winners }, {
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120', 'X-Cache': 'MISS' },
     })
   } catch (error) {
-    console.error('Error fetching winners:', error)
-    return NextResponse.json({ winners: [] })
+    return errorResponse(error, 'Winners fetch error')
   }
 }
 
+// Admin announces (or replaces) the 1st/2nd/3rd place for a category.
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { category, teamId, teamName, score, position } = body
+    const admin = await requireAdmin()
+    const { category, teamId, teamName, score, position } = await request.json()
 
     if (!category || !teamName || !position) {
-      return NextResponse.json(
-        { error: 'Category, team name, and position are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Category, team name, and position are required' }, { status: 400 })
     }
-
-    // Validate position is 1, 2, or 3
     if (![1, 2, 3].includes(position)) {
-      return NextResponse.json(
-        { error: 'Position must be 1 (first), 2 (second), or 3 (third)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Position must be 1 (first), 2 (second), or 3 (third)' }, { status: 400 })
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    // Check if winner already exists for this category and position
-    const { data: existing } = await supabase
-      .from('winners')
-      .select('id')
-      .eq('category', category)
-      .eq('position', position)
-      .maybeSingle()
-
-    if (existing) {
-      // Update existing winner
-      const { error } = await supabase
-        .from('winners')
-        .update({ 
-          team_id: teamId, 
-          team_name: teamName, 
-          score, 
-          announced_at: new Date().toISOString() 
-        })
-        .eq('id', existing.id)
-
-      if (error) throw error
-    } else {
-      // Insert new winner
-      const { error } = await supabase
-        .from('winners')
-        .insert({ 
-          category, 
-          team_id: teamId, 
-          team_name: teamName, 
-          score,
-          position 
-        })
-
-      if (error) throw error
-    }
-
-    // Clear cache after update
+    await sql`
+      INSERT INTO winners (category, team_id, team_name, score, position)
+      VALUES (${category}, ${teamId || null}, ${teamName}, ${score ?? null}, ${position})
+      ON CONFLICT (category, position) DO UPDATE SET
+        team_id = EXCLUDED.team_id,
+        team_name = EXCLUDED.team_name,
+        score = EXCLUDED.score,
+        announced_at = now()
+    `
+    await logAdminAction(admin.email, 'announce_winner', 'team', teamId || null, { category, position, teamName })
     clearCache('winners:all')
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error announcing winner:', error)
-    return NextResponse.json(
-      { error: 'Failed to announce winner' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'Announce winner error')
   }
 }

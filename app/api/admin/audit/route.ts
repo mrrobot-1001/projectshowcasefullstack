@@ -5,9 +5,9 @@ import { requireAdmin, errorResponse } from '@/lib/auth'
 export async function GET() {
   try {
     await requireAdmin()
-    const teams = await sql`SELECT * FROM teams ORDER BY created_at DESC`
-    return NextResponse.json({ teams })
+    const entries = await sql`SELECT * FROM admin_audit_log ORDER BY created_at DESC LIMIT 50`
+    return NextResponse.json({ entries })
   } catch (error) {
-    return errorResponse(error, 'Admin teams error')
+    return errorResponse(error, 'Audit log error')
   }
 }

@@ -1,184 +1,82 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { rateLimit } from '@/lib/rate-limiter'
-import { getCached, setCache } from '@/lib/cache'
+import { sql } from '@/lib/db'
+import { getSession, AuthError, errorResponse } from '@/lib/auth'
 
+const CRITERIA = ['innovation', 'pitching', 'presentation', 'creativity', 'functionality', 'scalability'] as const
+
+// Admin: every score. Judge: only their own (optionally for one project).
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const projectId = searchParams.get('projectId')
-    const judgeId = searchParams.get('judgeId')
-    const clientIp = request.headers.get('x-forwarded-for') || 'anonymous'
+    const projectId = request.nextUrl.searchParams.get('projectId')
+    const admin = await getSession('admin')
+    const judge = admin ? null : await getSession('judge')
+    if (!admin && !judge) throw new AuthError(401)
 
-    // Rate limiting: 60 requests per minute
-    if (!rateLimit(`scores:${clientIp}`, { interval: 60000, maxRequests: 60 })) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
-      )
+    if (projectId && judge) {
+      const [score] = await sql`
+        SELECT * FROM scores WHERE project_id = ${projectId} AND judge_id = ${judge.sub}
+      `
+      return NextResponse.json({ score: score ?? null })
     }
 
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      )
-    }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    if (projectId && judgeId) {
-      // Check cache for specific score
-      const cacheKey = `score:${projectId}:${judgeId}`
-      const cached = getCached<any>(cacheKey)
-      if (cached) {
-        return NextResponse.json({ score: cached })
-      }
-
-      // Get specific score
-      const { data, error } = await supabase
-        .from('scores')
-        .select('*')
-        .eq('project_id', projectId)
-        .eq('judge_id', judgeId)
-        .single()
-
-      if (error && error.code !== 'PGRST116') {
-        throw error
-      }
-
-      // Cache for 5 minutes
-      if (data) {
-        setCache(cacheKey, data, 300000)
-      }
-
-      return NextResponse.json({ score: data })
-    }
-
-    // Check cache for all scores
-    const allScoresCacheKey = 'scores:all'
-    const cachedAll = getCached<any[]>(allScoresCacheKey)
-    if (cachedAll) {
-      return NextResponse.json(cachedAll, {
-        headers: { 'X-Cache': 'HIT' }
-      })
-    }
-
-    // Get all scores (for admin results) - optimized query
-    const { data, error } = await supabase
-      .from('scores')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1000) // Add limit to prevent excessive data transfer
-
-    if (error) throw error
-
-    // Cache all scores for 1 minute
-    setCache(allScoresCacheKey, data, 60000)
-
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
-        'X-Cache': 'MISS'
-      }
-    })
+    const judgeId = judge?.sub ?? null
+    const scores = await sql`
+      SELECT * FROM scores
+      WHERE (${judgeId}::uuid IS NULL OR judge_id = ${judgeId})
+        AND (${projectId}::uuid IS NULL OR project_id = ${projectId})
+      ORDER BY created_at DESC
+      LIMIT 1000
+    `
+    return NextResponse.json(scores, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) {
-    console.error('Error fetching scores:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return errorResponse(error, 'Scores fetch error')
   }
 }
 
+// A judge scores a project (creates or updates their score).
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { projectId, judgeId, judgeName, scores } = body
+    const judge = await getSession('judge')
+    if (!judge) throw new AuthError(401)
 
-    if (!projectId || !judgeId || !judgeName || !scores) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    const { projectId, scores } = await request.json()
+    if (typeof projectId !== 'string' || !scores || typeof scores !== 'object') {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      )
-    }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
+    const values: Record<string, number> = {}
+    for (const key of CRITERIA) {
+      const n = Number(scores[key] ?? 0)
+      if (!Number.isInteger(n) || n < 0 || n > 10) {
+        return NextResponse.json({ error: `${key} must be a whole number from 0 to 10` }, { status: 400 })
       }
-    )
+      values[key] = n
+    }
+    const total = Object.values(values).reduce((a, b) => a + b, 0)
 
-    // Calculate total
-    const total = Object.values(scores).reduce((a: number, b: any) => a + b, 0)
-
-    // Check if score already exists
-    const { data: existing } = await supabase
-      .from('scores')
-      .select('id')
-      .eq('project_id', projectId)
-      .eq('judge_id', judgeId)
-      .single()
-
-    if (existing) {
-      // Update existing score
-      const { error } = await supabase
-        .from('scores')
-        .update({
-          judge_name: judgeName,
-          innovation: scores.innovation,
-          pitching: scores.pitching,
-          presentation: scores.presentation,
-          creativity: scores.creativity,
-          functionality: scores.functionality,
-          scalability: scores.scalability,
-          total_score: total,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existing.id)
-
-      if (error) throw error
-    } else {
-      // Insert new score
-      const { error } = await supabase
-        .from('scores')
-        .insert({
-          project_id: projectId,
-          judge_id: judgeId,
-          judge_name: judgeName,
-          innovation: scores.innovation,
-          pitching: scores.pitching,
-          presentation: scores.presentation,
-          creativity: scores.creativity,
-          functionality: scores.functionality,
-          scalability: scores.scalability,
-          total_score: total
-        })
-
-      if (error) throw error
+    const [project] = await sql`SELECT 1 FROM projects WHERE id = ${projectId}`
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
+    await sql`
+      INSERT INTO scores (project_id, judge_id, judge_name, innovation, pitching, presentation,
+                          creativity, functionality, scalability, total_score)
+      VALUES (${projectId}, ${judge.sub}, ${judge.name ?? judge.email}, ${values.innovation}, ${values.pitching},
+              ${values.presentation}, ${values.creativity}, ${values.functionality}, ${values.scalability}, ${total})
+      ON CONFLICT (project_id, judge_id) DO UPDATE SET
+        judge_name = EXCLUDED.judge_name,
+        innovation = EXCLUDED.innovation,
+        pitching = EXCLUDED.pitching,
+        presentation = EXCLUDED.presentation,
+        creativity = EXCLUDED.creativity,
+        functionality = EXCLUDED.functionality,
+        scalability = EXCLUDED.scalability,
+        total_score = EXCLUDED.total_score,
+        updated_at = now()
+    `
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error submitting score:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return errorResponse(error, 'Score submit error')
   }
 }

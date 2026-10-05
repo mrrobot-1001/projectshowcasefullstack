@@ -81,6 +81,12 @@ export default function JudgePage() {
   const fetchScoredProjects = async (judgeId: string) => {
     try {
       const res = await fetch('/api/scores')
+      if (res.status === 401) {
+        // Session expired or never started on the server
+        localStorage.removeItem('judgeAuth')
+        router.push('/guest-login')
+        return
+      }
       if (res.ok) {
         const allScores = await res.json()
         const judgeScores = allScores.filter((score: any) => score.judge_id === judgeId)
@@ -112,7 +118,8 @@ export default function JudgePage() {
     setFilteredProjects(filtered)
   }, [selectedCategory, searchQuery, projects])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch('/api/auth/judge-logout', { method: 'POST' })
     localStorage.removeItem('judgeAuth')
     router.push('/login')
   }

@@ -1,24 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sql } from '@/lib/db'
+import { requireAdmin, errorResponse } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const supabase = await createClient()
-
-    const { data: projects, error } = await supabase
-      .from('projects')
-      .select('*, teams(*)')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-
+    await requireAdmin()
+    const projects = await sql`
+      SELECT p.*, (SELECT to_jsonb(t) FROM teams t WHERE t.id = p.team_id) AS teams
+      FROM projects p ORDER BY p.created_at DESC
+    `
     return NextResponse.json({ projects })
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return errorResponse(error, 'Admin projects error')
   }
 }
